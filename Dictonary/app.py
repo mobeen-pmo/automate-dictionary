@@ -23,10 +23,35 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* ── Hide Streamlit defaults ── */
+    /* ── Hide Streamlit defaults (keep sidebar toggle visible) ── */
     #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
     footer {visibility: hidden;}
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+    }
+    /* Hide the deploy/toolbar but keep everything else in header */
+    header [data-testid="stToolbar"] {
+        visibility: hidden;
+    }
+    /* Force sidebar toggle (hamburger) to be always visible */
+    button[data-testid="stSidebarCollapsedControl"],
+    button[data-testid="baseButton-headerNoPadding"],
+    [data-testid="collapsedControl"] {
+        visibility: visible !important;
+        display: flex !important;
+        opacity: 1 !important;
+        color: #0072B5 !important;
+        z-index: 99999 !important;
+        position: fixed !important;
+        top: 0.6rem !important;
+        left: 0.6rem !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 8px !important;
+        padding: 6px !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+        cursor: pointer !important;
+    }
 
     /* ── Google Font ── */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -52,7 +77,7 @@ st.markdown(
     }
     .hero-subtitle {
         font-size: 1.05rem;
-        color: #64748B;
+        color: #64748B !important;
         margin-top: 4px;
         margin-bottom: 2rem;
     }
@@ -63,6 +88,8 @@ st.markdown(
         padding: 0.85rem 1.2rem;
         border: 2px solid #E2E8F0;
         border-radius: 14px;
+        background: #FFFFFF !important;
+        color: #1E293B !important;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     div[data-testid="stTextInput"] > div > div > input:focus {
@@ -74,7 +101,7 @@ st.markdown(
     .results-badge {
         display: inline-block;
         background: linear-gradient(135deg, #0072B5 0%, #00A5E0 100%);
-        color: white;
+        color: #FFFFFF !important;
         padding: 6px 18px;
         border-radius: 20px;
         font-size: 0.85rem;
@@ -85,7 +112,7 @@ st.markdown(
 
     /* ── Term Card ── */
     .term-card {
-        background: #FFFFFF;
+        background: #FFFFFF !important;
         border: 1px solid #E2E8F0;
         border-radius: 16px;
         padding: 1.4rem 1.6rem;
@@ -102,15 +129,19 @@ st.markdown(
     /* ── Category pill ── */
     .cat-badge {
         display: inline-block;
-        background: #EFF6FF;
-        color: #0072B5;
+        background: #EFF6FF !important;
+        color: #0072B5 !important;
         padding: 3px 12px;
         border-radius: 8px;
         font-size: 0.73rem;
         font-weight: 600;
-        text-transform: uppercase;
         letter-spacing: 0.6px;
         margin-bottom: 1rem;
+    }
+    .cat-badge .cat-jp {
+        color: #E11D48 !important;
+        font-weight: 500;
+        margin-left: 6px;
     }
 
     /* ── Card inner grid ── */
@@ -129,17 +160,17 @@ st.markdown(
     .lang-block .action-val {
         font-size: 1.05rem;
         font-weight: 700;
-        color: #1E293B;
+        color: #1E293B !important;
         margin-bottom: 6px;
     }
     .lang-block .activity-val {
         font-size: 0.88rem;
-        color: #64748B;
+        color: #64748B !important;
         line-height: 1.5;
     }
-    .en-block h4 { color: #0072B5; }
-    .jp-block h4 { color: #E11D48; }
-    .jp-block .action-val { color: #1E293B; }
+    .en-block h4 { color: #0072B5 !important; }
+    .jp-block h4 { color: #E11D48 !important; }
+    .jp-block .action-val { color: #1E293B !important; }
 
     /* ── Arrow divider ── */
     .arrow-divider {
@@ -147,24 +178,24 @@ st.markdown(
         align-items: center;
         justify-content: center;
         font-size: 1.6rem;
-        color: #CBD5E1;
+        color: #CBD5E1 !important;
         padding: 0 0.4rem;
         padding-top: 1.2rem;
     }
 
     /* ── Sidebar styling ── */
     section[data-testid="stSidebar"] {
-        background: #F8FAFC;
+        background: #F8FAFC !important;
         border-right: 1px solid #E2E8F0;
     }
     .sidebar-title {
         font-size: 1.1rem;
         font-weight: 700;
-        color: #0072B5;
+        color: #0072B5 !important;
         margin-bottom: 0.3rem;
     }
     .sidebar-stat {
-        background: white;
+        background: #FFFFFF !important;
         border: 1px solid #E2E8F0;
         border-radius: 12px;
         padding: 1rem;
@@ -174,11 +205,11 @@ st.markdown(
     .sidebar-stat .stat-num {
         font-size: 1.8rem;
         font-weight: 800;
-        color: #0072B5;
+        color: #0072B5 !important;
     }
     .sidebar-stat .stat-label {
         font-size: 0.78rem;
-        color: #94A3B8;
+        color: #94A3B8 !important;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
@@ -189,17 +220,17 @@ st.markdown(
         bottom: 0;
         left: 0;
         width: 100%;
-        background: #F8FAFC;
+        background: #F8FAFC !important;
         border-top: 1px solid #E2E8F0;
         text-align: center;
         padding: 10px 0;
         font-size: 0.82rem;
-        color: #94A3B8;
+        color: #94A3B8 !important;
         z-index: 9999;
         letter-spacing: 0.3px;
     }
     .custom-footer span {
-        color: #0072B5;
+        color: #0072B5 !important;
         font-weight: 600;
     }
 
@@ -207,7 +238,7 @@ st.markdown(
     .no-results {
         text-align: center;
         padding: 3rem 1rem;
-        color: #94A3B8;
+        color: #94A3B8 !important;
     }
     .no-results .emoji {
         font-size: 3rem;
@@ -233,21 +264,23 @@ def load_data() -> pd.DataFrame:
         df = pd.read_csv(DATA_FILE, encoding="cp932")
 
     # Normalize column names
-    # The app expects: Category, Action (English), Action (Japanese), Activity (English), Activity (Japanese)
-    # The CSV provided has: Category (English), Category (Japanese), Activity (English), Activity (Japanese)
+    # The CSV has: Category (English), Category (Japanese), Activity (English), Activity (Japanese)
     
-    # 1. Map Category
+    # 1. Map Category (use English as primary key)
     if "Category" not in df.columns:
         if "Category (English)" in df.columns:
             df["Category"] = df["Category (English)"]
         elif "Category (Japanese)" in df.columns:
             df["Category"] = df["Category (Japanese)"]
     
-    # 2. Ensure Action/Activity columns exist
-    # If Action is missing but Activity exists, we keep Activity.
-    # We just ensure the columns referenced in SEARCH_COLS and the UI exist.
+    # 2. Ensure Category (Japanese) column is preserved for bilingual display
+    if "Category (Japanese)" not in df.columns:
+        df["Category (Japanese)"] = ""
+    
+    # 3. Ensure Action/Activity columns exist
     required_cols = [
         "Category",
+        "Category (Japanese)",
         "Action (English)",
         "Action (Japanese)",
         "Activity (English)",
@@ -275,6 +308,8 @@ def load_data() -> pd.DataFrame:
 df = load_data()
 
 SEARCH_COLS = [
+    "Category",
+    "Category (Japanese)",
     "Action (English)",
     "Action (Japanese)",
     "Activity (English)",
@@ -293,14 +328,25 @@ with st.sidebar:
     )
     st.markdown("---")
 
-    # Category filter
-    categories = sorted(df["Category"].unique())
-    selected_cats = st.multiselect(
+    # Category filter — build bilingual labels
+    cat_map = {}  # display_label -> english_category
+    for _, row in df[["Category", "Category (Japanese)"]].drop_duplicates().iterrows():
+        en = row["Category"]
+        jp = row["Category (Japanese)"]
+        if jp and jp != en and jp != "":
+            label = f"{en}  ({jp})"
+        else:
+            label = en
+        cat_map[label] = en
+
+    category_labels = sorted(cat_map.keys())
+    selected_labels = st.multiselect(
         "📂 Filter by Category",
-        options=categories,
+        options=category_labels,
         default=[],
         help="Leave empty to search all categories.",
     )
+    selected_cats = [cat_map[lbl] for lbl in selected_labels]
 
     st.markdown("---")
 
@@ -404,14 +450,21 @@ else:
         display_df = filtered.head(100)  # cap for performance
         for _, row in display_df.iterrows():
             cat = row.get("Category", "")
+            cat_jp = row.get("Category (Japanese)", "")
             en_action = row.get("Action (English)", "")
             jp_action = row.get("Action (Japanese)", "")
             en_activity = row.get("Activity (English)", "")
             jp_activity = row.get("Activity (Japanese)", "")
 
+            # Build bilingual category badge
+            if cat_jp and cat_jp != cat and cat_jp != "":
+                cat_display = f'{cat} <span class="cat-jp">({cat_jp})</span>'
+            else:
+                cat_display = cat
+
             card_html = f"""
             <div class="term-card">
-                <div class="cat-badge">{cat}</div>
+                <div class="cat-badge">{cat_display}</div>
                 <div class="card-grid">
                     <div class="lang-block en-block">
                         <h4>🇬🇧 English</h4>
