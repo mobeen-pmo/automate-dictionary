@@ -5,6 +5,7 @@ Developed by Mirza Muhammad Mobeen
 
 import streamlit as st
 import pandas as pd
+import os
 
 # ──────────────────────────────────────────────
 # 1. PAGE CONFIG
@@ -220,7 +221,7 @@ st.markdown(
 # ──────────────────────────────────────────────
 # 3. DATA LOADING
 # ──────────────────────────────────────────────
-DATA_FILE = "Bilingual Automation Action and Activity Catalog.csv"
+DATA_FILE = os.path.join(os.path.dirname(__file__), "Bilingual Automation Action and Activity Catalog.csv")
 
 @st.cache_data
 def load_data() -> pd.DataFrame:
