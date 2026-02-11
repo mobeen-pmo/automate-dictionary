@@ -440,8 +440,7 @@ else:
 # ──────────────────────────────────────────────
 st.markdown(
     '<div class="custom-footer">'
-    "© 2026 | Developed by <span>Mirza Muhammad Mobeen</span>"
+    "© 2025 | Developed by <span>Mirza Muhammad Mobeen</span>"
     "</div>",
     unsafe_allow_html=True,
 )
-
