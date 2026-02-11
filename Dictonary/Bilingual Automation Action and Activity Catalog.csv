@@ -1,0 +1,642 @@
+Category (English),Category (Japanese),Activity (English),Activity (Japanese)
+Active Directory,Active Directory,Create User,ユーザーの作成
+Active Directory,Active Directory,Modify User,ユーザーの変更
+Active Directory,Active Directory,Create Group,グループの作成
+Active Directory,Active Directory,Modify Group,グループの変更
+Active Directory,Active Directory,Get Group Members,グループメンバーの取得
+Active Directory,Active Directory,List Object Paths,リストオブジェクトのパス
+Active Directory,Active Directory,Get Object Path,オブジェクト パスの取得
+Active Directory,Active Directory,Get Object Dataset,オブジェクト データセットの取得
+Active Directory,Active Directory,Create Object,オブジェクトの作成
+Active Directory,Active Directory,Delete Object,オブジェクトの削除
+Active Directory,Active Directory,Move Object,オブジェクトの移動
+Active Directory,Active Directory,Rename Object,オブジェクトの名前を変更
+Active Directory,Active Directory,Get Object Property,オブジェクト プロパティの取得
+Active Directory,Active Directory,Set Object Property,オブジェクト プロパティの設定
+Amazon DynamoDB,Amazon DynamoDB,Create Session,セッションの作成
+Amazon DynamoDB,Amazon DynamoDB,End Session,セッションの終了
+Amazon DynamoDB,Amazon DynamoDB,List Tables,テーブルのリスト化
+Amazon DynamoDB,Amazon DynamoDB,Create Table,テーブルの作成
+Amazon DynamoDB,Amazon DynamoDB,Update Table,テーブルの更新
+Amazon DynamoDB,Amazon DynamoDB,Delete Table,テーブルの削除
+Amazon DynamoDB,Amazon DynamoDB,Describe Table,テーブルの記述
+Amazon DynamoDB,Amazon DynamoDB,Query,クエリ
+Amazon DynamoDB,Amazon DynamoDB,Scan,スキャン
+Amazon DynamoDB,Amazon DynamoDB,Create Item,アイテムの作成
+Amazon DynamoDB,Amazon DynamoDB,Delete Item,アイテムの削除
+Amazon DynamoDB,Amazon DynamoDB,Get Item,アイテムの取得
+Amazon EC2,Amazon EC2,Create Session,セッションの作成
+Amazon EC2,Amazon EC2,End Session,セッションの終了
+Amazon EC2,Amazon EC2,Launch Instance,インスタンスの起動
+Amazon EC2,Amazon EC2,Start Instance,インスタンスの開始
+Amazon EC2,Amazon EC2,Stop Instance,インスタンスの停止
+Amazon EC2,Amazon EC2,Terminate Instance,インスタンスの終了
+Amazon EC2,Amazon EC2,Reboot Instance,インスタンスの再起動
+Amazon EC2,Amazon EC2,List Running Instances,実行中インスタンスのリスト化
+Amazon EC2,Amazon EC2,List Images,画像のリスト化
+Amazon EC2,Amazon EC2,Create Volume,ボリュームの作成
+Amazon EC2,Amazon EC2,Delete Volume,ボリュームの削除
+Amazon EC2,Amazon EC2,List Volumes,ボリュームのリスト化
+Amazon EC2,Amazon EC2,Attach Volume,ボリュームのアタッチ
+Amazon EC2,Amazon EC2,Detach Volume,ボリュームのデタッチ
+Amazon EC2,Amazon EC2,Create Snapshot,スナップショットの作成
+Amazon EC2,Amazon EC2,Delete Snapshot,スナップショットの削除
+Amazon EC2,Amazon EC2,List Snapshots,スナップショットのリスト化
+Amazon EC2,Amazon EC2,Create Security Group,セキュリティグループの作成
+Amazon EC2,Amazon EC2,Delete Security Group,セキュリティグループの削除
+Amazon EC2,Amazon EC2,List Security Groups,セキュリティグループのリスト化
+Amazon EC2,Amazon EC2,Authorize Security Group,セキュリティグループの認証
+Amazon EC2,Amazon EC2,Revoke Security Group,セキュリティグループの取り消し
+Amazon EC2,Amazon EC2,Create Key Pair,キーペアの作成
+Amazon EC2,Amazon EC2,Delete Key Pair,キーペアの削除
+Amazon EC2,Amazon EC2,List Key Pairs,キーペアのリスト化
+Amazon EC2,Amazon EC2,Allocate Address,アドレスの割当て
+Amazon EC2,Amazon EC2,Release Address,アドレスの解放
+Amazon EC2,Amazon EC2,List Addresses,アドレスのリスト化
+Amazon EC2,Amazon EC2,Associate Address,アドレスの関連付け
+Amazon EC2,Amazon EC2,Disassociate Address,アドレス関連付け解除
+Amazon RDS,Amazon RDS,Create Session,セッションの作成
+Amazon RDS,Amazon RDS,End Session,セッションの終了
+Amazon RDS,Amazon RDS,Create Instance,インスタンスの作成
+Amazon RDS,Amazon RDS,Delete Instance,インスタンスの削除
+Amazon RDS,Amazon RDS,Modify Instance,インスタンスの変更
+Amazon RDS,Amazon RDS,Reboot Instance,インスタンスの再起動
+Amazon RDS,Amazon RDS,List Instances,インスタンスのリスト化
+Amazon RDS,Amazon RDS,Create Snapshot,スナップショットの作成
+Amazon RDS,Amazon RDS,Delete Snapshot,スナップショットの削除
+Amazon RDS,Amazon RDS,List Snapshots,スナップショットのリスト化
+Amazon RDS,Amazon RDS,Create Security Group,セキュリティグループの作成
+Amazon RDS,Amazon RDS,Delete Security Group,セキュリティグループの削除
+Amazon RDS,Amazon RDS,Authorize Security Group,セキュリティグループの認証
+Amazon RDS,Amazon RDS,Revoke Security Group,セキュリティグループの取消し
+Amazon RDS,Amazon RDS,List Security Groups,セキュリティグループのリスト化
+Amazon S3,Amazon S3,Create Session,セッションの作成
+Amazon S3,Amazon S3,End Session,セッションの終了
+Amazon S3,Amazon S3,Create Bucket,バケットの作成
+Amazon S3,Amazon S3,Delete Bucket,バケットの削除
+Amazon S3,Amazon S3,List Buckets,バケットのリスト化
+Amazon S3,Amazon S3,Get Bucket Location,バケット ロケーションの取得
+Amazon S3,Amazon S3,Get Bucket Versioning,バケット バージョニングの取得
+Amazon S3,Amazon S3,Set Bucket Versioning,バケット バージョニングの設定
+Amazon S3,Amazon S3,Put Object,オブジェクトの配置
+Amazon S3,Amazon S3,Get Object,オブジェクトの取得
+Amazon S3,Amazon S3,Copy Object,オブジェクトのコピー
+Amazon S3,Amazon S3,Delete Object,オブジェクトの削除
+Amazon S3,Amazon S3,List Objects,オブジェクトのリスト化
+Amazon S3,Amazon S3,List Versions,バージョンのリスト化
+Amazon S3,Amazon S3,Get Presigned URL,署名付き URL の取得
+Amazon S3,Amazon S3,Get ACL,ACL の取得
+Amazon S3,Amazon S3,Set ACL,ACL の設定
+Amazon SES,Amazon SES,Create Session,セッションの作成
+Amazon SES,Amazon SES,End Session,セッションの終了
+Amazon SES,Amazon SES,Send Email,メールの送信
+Amazon SES,Amazon SES,Send Email Statistics,メールの統計情報の送信
+Amazon SES,Amazon SES,List IDs,ID のリスト化
+Amazon SES,Amazon SES,Verify ID,ID の確認
+Amazon SES,Amazon SES,Delete ID,ID の削除
+Amazon SQS,Amazon SQS,Create Session,セッションの作成
+Amazon SQS,Amazon SQS,End Session,セッションの終了
+Amazon SQS,Amazon SQS,Create Queue,キューの作成
+Amazon SQS,Amazon SQS,List Queues,キューのリスト化
+Amazon SQS,Amazon SQS,Delete Queue,キューの削除
+Amazon SQS,Amazon SQS,Get Queue Attributes,キュー属性の取得
+Amazon SQS,Amazon SQS,Set Queue Attributes,キュー属性の設定
+Amazon SQS,Amazon SQS,Send Message,メッセージの送信
+Amazon SQS,Amazon SQS,Receive Message,メッセージの受信
+Amazon SQS,Amazon SQS,Delete Message,メッセージの削除
+Amazon SQS,Amazon SQS,Change Message Visibility,メッセージの可視性の変更
+Amazon SQS,Amazon SQS,Add Permission,権限の追加
+Amazon SQS,Amazon SQS,Remove Permission,権限の削除
+Array,配列,Create,作成
+Array,配列,Set,セット
+Array,配列,Resize,リサイズ
+AutoMate,AutoMate,Backup AutoMate,AutoMate のバックアップ
+AutoMate,AutoMate,Shutdown AutoMate,AutoMate のシャットダウン
+AutoMate,AutoMate,Write to Log,ログへの書込み
+Azure Storage,Azure Storage,Create Session,セッションの作成
+Azure Storage,Azure Storage,End Session,セッションの終了
+Azure Storage,Azure Storage,List Containers,コンテナーのリスト化
+Azure Storage,Azure Storage,Create Container,コンテナーの作成
+Azure Storage,Azure Storage,Delete Container,コンテナーの削除
+Azure Storage,Azure Storage,List Blobs,BLOB のリスト化
+Azure Storage,Azure Storage,Put Blob,BLOB の配置
+Azure Storage,Azure Storage,Get Blob,BLOB の取得
+Azure Storage,Azure Storage,Copy Blob,BLOB のコピー
+Azure Storage,Azure Storage,Rename Blob,BLOB 名の変更
+Azure Storage,Azure Storage,Snapshot Blob,BLOB スナップショットの作成
+Azure Storage,Azure Storage,Set Blob Properties,BLOB プロパティの設定
+Azure Storage,Azure Storage,Get Public URL,パブリック URL の取得
+Azure Storage,Azure Storage,List Queues,キューのリスト化
+Azure Storage,Azure Storage,Create Queue,キューの作成
+Azure Storage,Azure Storage,Delete Queue,キューの削除
+Azure Storage,Azure Storage,Put Message,メッセージの配置
+Azure Storage,Azure Storage,Get Single Message,単一メッセージの取得
+Azure Storage,Azure Storage,Get All Messages,すべてのメッセージの取得
+Azure Storage,Azure Storage,Delete Message,メッセージの削除
+Azure Storage,Azure Storage,List Tables,テーブルのリスト化
+Azure Storage,Azure Storage,Create Table,テーブルの作成
+Azure Storage,Azure Storage,Delete Table,テーブルの削除
+Azure Storage,Azure Storage,List Entities,エンティティのリスト化
+Azure Storage,Azure Storage,Insert Entity,エンティティの挿入
+Azure Storage,Azure Storage,Update Entity,エンティティの更新
+Azure Storage,Azure Storage,Delete Specific Entity,特定のエンティティの削除
+Azure Storage,Azure Storage,Delete Entity,エンティティの削除
+Azure Storage,Azure Storage,Download Entity,エンティティのダウンロード
+Azure Storage,Azure Storage,Upload Entity,エンティティのアップロード
+BASIC Script,Basic スクリプト,Run Script,スクリプトの実行
+Clipboard,クリップボード,Set to Variable,変数へのセット
+Clipboard,クリップボード,Set,セット
+Clipboard,クリップボード,Clear,クリア
+Clipboard,クリップボード,Cut,カット
+Clipboard,クリップボード,Copy,コピー
+Clipboard,クリップボード,Paste,貼り付け
+Compression,圧縮,Compress,圧縮
+Compression,圧縮,Decompress,解凍
+Compression,圧縮,Verify,確認
+Computer,コンピューター,Lock,ロック
+Computer,コンピューター,Log off,ログオフ
+Computer,コンピューター,Restart,再起動
+Computer,コンピューター,Suspend,サスペンド
+Computer,コンピューター,Hibernate,休止状態
+Computer,コンピューター,Shut down,シャットダウン
+Computer,コンピューター,Display,表示
+Computer,コンピューター,Set Date/Time,日付/時刻の設定
+Cryptography,暗号化,Encrypt and Sign,暗号化と署名
+Cryptography,暗号化,Decrypt and Verify,復号と確認
+Cryptography,暗号化,Encrypt,暗号化
+Cryptography,暗号化,Decrypt,復号
+Cryptography,暗号化,Sign,署名
+Cryptography,暗号化,Verify Signature,署名の検証
+Cryptography,暗号化,Create,作成
+Cryptography,暗号化,Delete,削除
+Cryptography,暗号化,Generate Key File,キー ファイルの生成
+Database,データベース,Open SQL Connection,SQL 接続を開く
+Database,データベース,Close SQL Connection,SQL 接続を閉じる
+Database,データベース,SQL Query,SQL クエリ
+Database,データベース,Stored Procedure,ストアド プロシージャ
+Dataset,データセット,Create,作成
+Dataset,データセット,Duplicate,複製
+Dataset,データセット,Insert Row,行の挿入
+Dataset,データセット,Move Row,行の移動
+Dataset,データセット,Delete Row,行の削除
+Dataset,データセット,Insert Column,列の挿入
+Dataset,データセット,Rename Column,列の名前変更
+Dataset,データセット,Move Column,列の移動
+Dataset,データセット,Delete Column,列の削除
+DDE,DDE,Execute,実行
+DDE,DDE,Poke,ポーク
+DDE,DDE,Request,要求
+Dialog,(ダイアログ),Input,入力
+Dialog,(ダイアログ),Message,メッセージ
+Dialog,(ダイアログ),Open File,ファイルを開く
+Dialog,(ダイアログ),Save File,ファイルの保存
+Dialog,(ダイアログ),Browse Folder,フォルダの参照
+Dialog,(ダイアログ),Select,選択
+DLL,DLL,Run Function,関数の実行
+Dynamics 365,Dynamics 365,Create Session,セッションの作成
+Dynamics 365,Dynamics 365,End Session,セッションの終了
+Dynamics 365,Dynamics 365,Create Entity,エンティティの作成
+Dynamics 365,Dynamics 365,Get Entity,エンティティの取得
+Dynamics 365,Dynamics 365,List Entities,エンティティのリスト化
+Dynamics 365,Dynamics 365,Update Entity,エンティティの更新
+Dynamics 365,Dynamics 365,Delete Specific Entity,特定のエンティティの削除
+Dynamics 365,Dynamics 365,List Attachments,添付ファイルのリスト化
+Dynamics 365,Dynamics 365,Upload Attachment,添付ファイルのアップロード
+Dynamics 365,Dynamics 365,Download Attachment,添付ファイルのダウンロード
+Dynamics 365,Dynamics 365,Delete Attachment,添付ファイルの削除
+Dynamics 365,Dynamics 365,Start Workflow,ワークフローの開始
+Dynamics 365,Dynamics 365,Enable/Disable Auditing,監査の有効化/無効化
+Dynamics 365,Dynamics 365,Get Audit Records,監査レコードの取得
+Dynamics CRM,Dynamics CRM,Create Session,セッションの作成
+Dynamics CRM,Dynamics CRM,End Session,セッションの終了
+Dynamics CRM,Dynamics CRM,List Entities,エンティティのリスト化
+Dynamics CRM,Dynamics CRM,Create Entity,エンティティの作成
+Dynamics CRM,Dynamics CRM,Update Entity,エンティティの更新
+Dynamics CRM,Dynamics CRM,Delete Entity,エンティティの削除
+Dynamics CRM,Dynamics CRM,Get Entity,エンティティの取得
+Dynamics CRM,Dynamics CRM,Upload Attachment,添付ファイルのアップロード
+Dynamics CRM,Dynamics CRM,Download Attachment,添付ファイルのダウンロード
+Dynamics CRM,Dynamics CRM,Start Workflow,ワークフローの開始
+Dynamics CRM,Dynamics CRM,Enable/Disable Auditing,監査の有効化/無効化
+Dynamics CRM,Dynamics CRM,Get Audit Records,監査レコードの取得
+Email,Email,Create Session,セッションの作成
+Email,Email,Send Message,メッセージの送信
+Email,Email,Get Message,メッセージの取得
+Email,Email,Archive Message,メッセージのアーカイブ
+Email,Email,Delete Message,メッセージの削除
+Email,Email,Delete Single Message,単一メッセージの削除
+Environment Variables,環境変数,Get Environment Variable,環境変数の取得
+Environment Variables,環境変数,List Environment Variables,環境変数のリスト化
+Environment Variables,環境変数,Set Environment Variable,環境変数の設定
+Environment Variables,環境変数,Append,追加
+Environment Variables,環境変数,Delete Environment Variable,環境変数の削除
+Event Log,イベント ログ,Write to Event Log,イベントログへの書き込む
+Excel,Excel,Open/Create Workbook,ブックを開く/作成する
+Excel,Excel,Close Workbook,ブックを閉じる
+Excel,Excel,Add Worksheet,ワークシートの追加
+Excel,Excel,Activate Worksheet,ワークシートをアクティブにする
+Excel,Excel,Get Active Worksheet,アクティブなシートの取得
+Excel,Excel,Select Cells,セルの選択
+Excel,Excel,Get Selected Cell Location,選択セルの場所の取得
+Excel,Excel,Get Cells,セルの取得
+Excel,Excel,Set Cells,セルの設定
+Excel,Excel,Run Macro,マクロの実行
+Exchange,Exchange,Create Session,セッションの作成
+Exchange,Exchange,End Session,セッションの終了
+Exchange,Exchange,Create Object,オブジェクトの作成
+Exchange,Exchange,Get Object,オブジェクトの取得
+Exchange,Exchange,Modify Object,オブジェクトの変更
+Exchange,Exchange,Delete Single Object,単一オブジェクトの削除
+Exchange,Exchange,Delete Object,オブジェクトの削除
+Exchange,Exchange,Move Single Object,単一オブジェクトの移動
+Exchange,Exchange,Move Object,オブジェクトの移動
+File System,ファイル システム,Copy,コピー
+File System,ファイル システム,Move,移動
+File System,ファイル システム,Delete,削除
+File System,ファイル システム,Rename,名前の変更
+File System,ファイル システム,Get Information,情報の取得
+File System,ファイル システム,Update Information,情報の更新
+File System,ファイル システム,Empty Recycle Bin,ごみ箱を空にする
+File System,ファイル システム,Read from File,ファイルからの読込み
+File System,ファイル システム,Write to File,ファイルへの書込み
+File System,ファイル システム,Split File,ファイルの分割
+File System,ファイル システム,Join File,ファイルの結合
+File System,ファイル システム,Dataset to CSV,データセットから CSV
+File System,ファイル システム,CSV to Dataset,CSV からデータセット
+File System,ファイル システム,Base64 Encode/Decode,Base64 エンコード/デコード
+File System,ファイル システム,Create Folder,フォルダーの作成
+File System,ファイル システム,Change Folder,フォルダーの変更
+File System,ファイル システム,Synchronize Folders,フォルダーの同期
+FTP,FTP,Log On,ログイン
+FTP,FTP,Log Off,ログオフ
+FTP,FTP,Download File,ファイルのダウンロード
+FTP,FTP,Upload File,ファイルのアップロード
+FTP,FTP,Delete File,ファイルの削除
+FTP,FTP,Rename File,ファイル名の変更
+FTP,FTP,FXP,
+FTP,FTP,Advanced,詳細
+FTP,FTP,Create Folder,フォルダーの作成
+FTP,FTP,Change Folder,フォルダーの変更
+FTP,FTP,Remove Folder,フォルダーの消去
+FTP,FTP,Synchronize Folders,フォルダーの同期
+HTTP,HTTP,Definition,定義
+HTTP,HTTP,Clear,クリア
+HTTP,HTTP,Get,
+HTTP,HTTP,Post,
+HTTP,HTTP,Put,
+HTTP,HTTP,Patch,
+HTTP,HTTP,Delete,
+HTTP,HTTP,Head,
+HTTP,HTTP,Trace,
+HTTP,HTTP,Options,
+If,If,Text,テキスト
+If,If,Process,プロセス
+If,If,LDAP Object,LDAP オブジェクト
+If,If,File Exists,ファイルの存在
+If,If,Folder Exists,フォルダーの存在
+If,If,File Compare,ファイルの比較
+If,If,Else,
+If,If,End If,
+Image,画像,Crop,クロップ
+Image,画像,Flip,反転
+Image,画像,Overlay,オーバーレイ
+Image,画像,Convert,変換
+Image,画像,Capture Image,画像のキャプチャー
+Image,画像,Resize,サイズ変更
+Image,画像,Rotate,回転
+Image,画像,Filter,フィルター
+Image,画像,Image Recognition,画像認識
+Input,入力,Block Input,入力のブロック
+Input,入力,Send Keystrokes,キーストロークの送信
+Input,入力,Hold Key,キーのホールド
+Input,入力,Release Key,キーのリリース
+Input,入力,Move Mouse,マウスの移動
+Input,入力,Click Mouse,マウスのクリック
+Interactivity,対話機能,Get Text,テキストの取得
+Interactivity,対話機能,Set Text,テキストの設定
+Interactivity,対話機能,Move Mouse to Object,マウスをオブジェクトに移動
+Interactivity,対話機能,Focus Item,アイテムのフォーカス
+Interactivity,対話機能,Check,チェックをつける
+Interactivity,対話機能,Click,クリック
+Interactivity,対話機能,Get Item,アイテムの取得
+Interactivity,対話機能,Select Item,アイテムの選択
+Interactivity,対話機能,Get Selected List Item,選択したリスト アイテムの取得
+Interactivity,対話機能,Select List Item,リストアイテムの選択
+Interactivity,対話機能,Get Selected Tree Item,選択したツリー アイテムの取得
+JSON OBJECT,JSON オブジェクト,Create,作成
+JSON OBJECT,JSON オブジェクト,Set Value,値の設定
+JSON OBJECT,JSON オブジェクト,Get Value,値の取得
+JSON OBJECT,JSON オブジェクト,Add Field,フィールドの追加
+JSON OBJECT,JSON オブジェクト,Remove Field,フィールドの削除
+JSON OBJECT,JSON オブジェクト,Add,追加
+JSON OBJECT,JSON オブジェクト,Remove Element,要素の削除
+JSON OBJECT,JSON オブジェクト,Get Size,サイズの取得
+JSON OBJECT,JSON オブジェクト,Text,テキスト
+JSON OBJECT,JSON オブジェクト,Decode,デコード
+JSON OBJECT,JSON オブジェクト,Encode,エンコード
+Label,ラベル,Create,作成
+Label,ラベル,Goto,
+Loop,Loop,Range,範囲
+Loop,Loop,Expression,式
+Loop,Loop,Dataset,データセット
+Loop,Loop,Array,配列
+Loop,Loop,Break,
+Loop,Loop,End loop,
+Loop,Loop,File,ファイル
+Loop,Loop,File Contents,ファイル コンテンツ
+Loop,Loop,Process,プロセス
+Loop,Loop,Value,値
+Loop,Loop,List,リスト
+Loop,Loop,List Control,リストコントロール
+Loop,Loop,Tree Control,ツリーコントロール
+Machine Learning,機械学習,Load Model,モデルのロード
+Machine Learning,機械学習,Run Model,モデルの実行
+Machine Learning,機械学習,Close Model,モデルのクローズ
+Network,ネットワーク,Connect,接続
+Network,ネットワーク,Disconnect,切断
+Network,ネットワーク,Map Network Drive,ネットワークドライブのマッピング
+Network,ネットワーク,Unmap Network Drive,ネットワークドライブのマッピング解除
+Network,ネットワーク,Ping,
+OCR,OCR,Get Text,テキストの取得
+OCR,OCR,Get Word,単語の取得
+OCR,OCR,Get Line,行の取得
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Open/Create Workbook,ブックを開く/作成する
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Close Workbook,ブックを閉じる
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Add Worksheet,ワークシートの追加
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Rename Worksheet,ワークシートの名前変更
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Move Worksheet,ワークシートの移動
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Copy Worksheet,ワークシートのコピー
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Delete Worksheet,ワークシートの削除
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Show/Hide Worksheet,ワークシートの表示/非表示
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Activate Worksheet,ワークシートをアクティブにする
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Get Active Sheet,アクティブなシートの取得
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Search,検索
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,List Worksheets,ワークシートのリスト化
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Select Cells,セルの選択
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Get Selected Cell Location,選択セルの場所の取得
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Get Cells,セルの取得
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Set Cells,セルの設定
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Insert Row/Column,行/列の挿入
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Delete Row/Column,行/列の削除
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Auto Fit Row/Column,行/列の自動調整
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Add Hyperlink,ハイパーリンクの追加
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Convert Reference/Location,参照形式/位置形式の変換
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Encryption,暗号化
+OpenDocument Spreadsheet (ODS),OpenDocument スプレッドシート,Decryption,復号
+PDF,PDF,Create Session,セッションの作成
+PDF,PDF,End Session,セッションの終了
+PDF,PDF,Create,作成
+PDF,PDF,Stamp,スタンプ
+PDF,PDF,Extract,抽出
+PDF,PDF,Add Header/Footer,ヘッダー/フッターを追加
+PDF,PDF,Get PDF Information,PDF 情報の取得
+PDF,PDF,Set Field,フィールドの設定
+PDF,PDF,Get Field,フィールドの取得
+PDF,PDF,Get Field Value,フィールド値の取得
+PDF,PDF,Disable Field,フィールドの無効化
+PDF,PDF,Sign,署名
+PDF,PDF,Merge,結合
+PDF,PDF,Extract Pages,ページの抽出
+PDF,PDF,Replace,置換
+PDF,PDF,Split,分割
+PDF,PDF,Insert,挿入
+PDF,PDF,Remove,除去
+PDF,PDF,List Attachments,添付ファイルのリスト化
+PDF,PDF,Get Attachment,添付ファイルの取得
+PDF,PDF,Add Attachment,添付ファイルの追加
+PDF,PDF,Delete Attachment,添付ファイルの削除
+PDF,PDF,List Annotations,注釈のリスト化
+PDF,PDF,Add Annotation,注釈の追加
+PDF,PDF,Delete Annotation,注釈の削除
+PowerShell,PowerShell,Run Script,スクリプトの実行
+Printer,プリンター,Set Default Printer,デフォルト プリンターの設定
+Printer,プリンター,Delete,削除
+Printer,プリンター,Get Printer Info,プリンター情報の取得
+Processes,プロセス,Get Information,情報の取得
+Processes,プロセス,Start,開始
+Processes,プロセス,End,終了
+Processes,プロセス,Set Priority,優先度の設定
+Processes,プロセス,Set Affinity,親和性の設定
+Registry,レジストリ,Create Key,キーの作成
+Registry,レジストリ,Delete Key,キーの削除
+Registry,レジストリ,Rename Key,キーの名前変更
+Registry,レジストリ,Read Value,値の読込み
+Registry,レジストリ,Create Value,値の作成
+Registry,レジストリ,Delete Value,値の削除
+Registry,レジストリ,Rename Value,値の名前変更
+Registry,レジストリ,Get Value,値の取得
+Run,実行,Run,実行
+Security,セキュリティ,Generate Password,パスワードの生成
+Security,セキュリティ,Authenticate,認証
+Select,Select,Begin select,
+Select,Select,Begin case,
+Select,Select,End case,
+Select,Select,End select,
+Services,サービス,Start,開始
+Services,サービス,Stop,停止
+Services,サービス,Pause,一時停止
+Services,サービス,Resume,再開
+Services,サービス,Install,インストール
+Services,サービス,Uninstall,アンインストール
+Services,サービス,Get Status,状態の取得
+Services,サービス,List Status,状態のリスト化
+SharePoint,SharePoint,Create Session,セッションの作成
+SharePoint,SharePoint,End Session,セッションの終了
+SharePoint,SharePoint,Get File,ファイルの取得
+SharePoint,SharePoint,Download File,ファイルのダウンロード
+SharePoint,SharePoint,Upload File,ファイルのアップロード
+SharePoint,SharePoint,Delete File,ファイルの削除
+SharePoint,SharePoint,Check In,チェックイン
+SharePoint,SharePoint,Check Out,チェックアウト
+SharePoint,SharePoint,Discard Check Out,チェックアウトの破棄
+SharePoint,SharePoint,Copy File,ファイルのコピー
+SharePoint,SharePoint,Move File,ファイルの移動
+SharePoint,SharePoint,Get Folder,フォルダーの取得
+SharePoint,SharePoint,Create Folder,フォルダーの作成
+SharePoint,SharePoint,Delete Folder,フォルダーの削除
+SharePoint,SharePoint,Rename Folder,フォルダー名の変更
+SharePoint,SharePoint,Get List,リストの取得
+SharePoint,SharePoint,Create List,リストの作成
+SharePoint,SharePoint,Delete List,リストの削除
+SharePoint,SharePoint,Update List,リストの更新
+SharePoint,SharePoint,Describe List,リストの記述
+SharePoint,SharePoint,Get List Item,リスト アイテムの取得
+SharePoint,SharePoint,Add List Item,リスト アイテムの追加
+SharePoint,SharePoint,Clear List Item,リスト アイテムの消去
+SharePoint,SharePoint,Update List Item,リスト アイテムの更新
+SharePoint,SharePoint,Get Attachment,添付ファイルの取得
+SharePoint,SharePoint,Add Attachment,添付ファイルの追加
+SharePoint,SharePoint,Download Attachment,添付ファイルのダウンロード
+SharePoint,SharePoint,Delete Attachment,添付ファイルの削除
+SharePoint,SharePoint,Search Site,サイトの検索
+SharePoint,SharePoint,Get Site,サイトの取得
+SharePoint,SharePoint,Create Site,サイトの作成
+SharePoint,SharePoint,Delete Site,サイトの削除
+SharePoint,SharePoint,Update Site,サイトの更新
+SharePoint,SharePoint,List Audit Logs,監査ログのリスト化
+SharePoint,SharePoint,Backup Site,サイトのバックアップ
+SharePoint,SharePoint,Restore Site,サイトの復元
+SharePoint,SharePoint,List User Alerts,ユーザーアラートのリスト化
+SharePoint,SharePoint,Create User Alert,ユーザーアラートの作成
+SharePoint,SharePoint,Update User Alert,ユーザーアラートの更新
+SharePoint,SharePoint,Delete User Alert,ユーザーアラートの削除
+SharePoint,SharePoint,Get Workflow,ワークフローの取得
+SharePoint,SharePoint,Get Workflow Instance,ワークフロー インスタンスの取得
+SharePoint,SharePoint,Start Workflow,ワークフローの開始
+SharePoint,SharePoint,Cancel Workflow,ワークフローのキャンセル
+SharePoint,SharePoint,Resume Workflow,ワークフローの再開
+SharePoint,SharePoint,Pause Workflow,ワークフローの一時停止
+SharePoint,SharePoint,End Workflow,ワークフローの終了
+SharePoint,SharePoint,Get View,ビューの取得
+SharePoint,SharePoint,Add View,ビューの追加
+SharePoint,SharePoint,Update View,ビューの更新
+SharePoint,SharePoint,Delete View,ビューの削除
+SharePoint,SharePoint,Get Group,グループの取得
+SharePoint,SharePoint,Create Group,グループの作成
+SharePoint,SharePoint,Delete Group,グループの削除
+SharePoint,SharePoint,Update Group,グループの更新
+SharePoint,SharePoint,Get User,ユーザーの取得
+SharePoint,SharePoint,Add User to Group,グループへのユーザー追加
+SharePoint,SharePoint,Remove User from Group,グループからのユーザー除去
+SharePoint,SharePoint,Get Role,ロールの取得
+SharePoint,SharePoint,Create Role,ロールの作成
+SharePoint,SharePoint,Delete Role,ロールの削除
+SharePoint,SharePoint,Update Role,ロールの更新
+SharePoint,SharePoint,Grant Permission,権限の付与
+SharePoint,SharePoint,Remove Permission,権限の除去
+SNMP,SNMP,Send Trap,Send trap
+SNMP,SNMP,Set,Set
+SNMP,SNMP,Get,Get
+SNMP,SNMP,Get Next,Get Next
+SNMP,SNMP,Get Bulk,Get bulk
+SNMP,SNMP,Walk,Walk
+Task,タスク,Start Subtask,サブタスクの開始
+Task,タスク,Stop,停止
+Task,タスク,Run,実行
+Task,タスク,Enable/Disable,有効/無効
+Task,タスク,Call Function,関数の呼出し
+Terminal,ターミナル,Connect,接続
+Terminal,ターミナル,Disconnect,切断
+Terminal,ターミナル,Send Text,テキストの送信
+Terminal,ターミナル,Get Text,テキストの取得
+Terminal,ターミナル,Wait Condition,待機条件
+Terminal,ターミナル,Control,コントロール
+Text,テキスト,Padding,パディング
+Text,テキスト,Convert Case,大文字小文字の変換
+Text,テキスト,Get Substring,サブストリングの取得
+Text,テキスト,Format Path,パスの書式設定
+Timer,タイマー,Start,開始
+Timer,タイマー,Stop,停止
+Timer,タイマー,Read,読取り
+Type,タイプ,Define,定義
+Type,タイプ,Import,インポート
+Type,タイプ,Create Object,オブジェクトの作成
+Variable,変数,Create,作成
+Variable,変数,Set,セット
+Variable,変数,Increment,増加
+Variable,変数,Decrement,減少
+Variable,変数,Return Value,戻り値
+VMware Guest,VMware ゲスト,Connect,接続
+VMware Guest,VMware ゲスト,Disconnect,切断
+VMware Guest,VMware ゲスト,Log On,ログオン
+VMware Guest,VMware ゲスト,Log Off,ログオフ
+VMware Guest,VMware ゲスト,Copy File,ファイルのコピー
+VMware Guest,VMware ゲスト,Rename File,ファイル名の変更
+VMware Guest,VMware ゲスト,File Exists,ファイルの存在
+VMware Guest,VMware ゲスト,Get File Info,ファイル情報の取得
+VMware Guest,VMware ゲスト,Create Temp File,一時ファイルの作成
+VMware Guest,VMware ゲスト,Delete File,ファイルの削除
+VMware Guest,VMware ゲスト,List Directories,ディレクトリのリスト化
+VMware Guest,VMware ゲスト,Create Directory,ディレクトリの作成
+VMware Guest,VMware ゲスト,Delete Directory,ディレクトリの削除
+VMware Guest,VMware ゲスト,Directory Exists,ディレクトリの存在
+VMware Guest,VMware ゲスト,List Processes,プロセスのリスト化
+VMware Guest,VMware ゲスト,Kill Process,プロセスの終了
+VMware Guest,VMware ゲスト,Run Program,プログラムの実行
+VMware Guest,VMware ゲスト,Run Script,スクリプトの実行
+VMware Guest,VMware ゲスト,Capture Screen,画面のキャプチャ
+VMware Guest,VMware ゲスト,Open URL,URL を開く
+VMware Guest,VMware ゲスト,Get Guest Variables,ゲスト変数の取得
+VMware Guest,VMware ゲスト,Set Guest Variables,ゲスト変数の設定
+VMware Guest,VMware ゲスト,Get Environment Variables,環境変数の取得
+VMware Guest,VMware ゲスト,Set Environment Variables,環境変数の設定
+VMware Host,VMware ホスト,Connect,接続
+VMware Host,VMware ホスト,Disconnect,切断
+VMware Host,VMware ホスト,Power On,パワーオン
+VMware Host,VMware ホスト,Power Off,パワーオフ
+VMware Host,VMware ホスト,Reset,リセット
+VMware Host,VMware ホスト,Suspend,サスペンド
+VMware Host,VMware ホスト,Pause,一時停止
+VMware Host,VMware ホスト,Unpause,一時停止の解除
+VMware Host,VMware ホスト,List Running VMs,実行中 VM のリスト化
+VMware Host,VMware ホスト,Clone VM,仮想マシンの複製
+VMware Host,VMware ホスト,Delete VM,仮想マシンの削除
+VMware Host,VMware ホスト,Install VMware Tools,VMware Tools のインストール
+VMware Host,VMware ホスト,List Registered VMs,登録済 VM のリスト化
+VMware Host,VMware ホスト,Register,登録
+VMware Host,VMware ホスト,Unregister,登録の解除
+VMware Host,VMware ホスト,Create Snapshot,スナップショットの作成
+VMware Host,VMware ホスト,Delete Snapshot,スナップショットの削除
+VMware Host,VMware ホスト,Revert to Snapshot,スナップショットへの回復
+VMware Host,VMware ホスト,List Snapshots,スナップショットのリスト化
+Wait,Wait,File,ファイル
+Wait,Wait,Pointer,ポインター
+Wait,Wait,Process,プロセス
+Wait,Wait,Time,時間
+Wait,Wait,Date/Time,日時
+Wait,Wait,Pixel,ピクセル
+Wait,Wait,Window,ウィンドウ
+Web Browser,Web ブラウザ,Open,ブラウザを開く
+Web Browser,Web ブラウザ,Close,ブラウザを閉じる
+Web Browser,Web ブラウザ,Assign Session,セッションの割当て
+Web Browser,Web ブラウザ,Navigate,ページの移動
+Web Browser,Web ブラウザ,Refresh,更新
+Web Browser,Web ブラウザ,Back,戻る
+Web Browser,Web ブラウザ,Forward,進む
+Web Browser,Web ブラウザ,New Tab,新規タブ
+Web Browser,Web ブラウザ,Duplicate Tab,タブの複製
+Web Browser,Web ブラウザ,Switch Tab,タブの切替
+Web Browser,Web ブラウザ,Close Tab,タブを閉じる
+Web Browser,Web ブラウザ,Tab Details,タブの詳細
+Web Browser,Web ブラウザ,Get Value,値の取得
+Web Browser,Web ブラウザ,Set Value,値の設定
+Web Browser,Web ブラウザ,Select List Item,リストアイテムの選択
+Web Browser,Web ブラウザ,Select Menu Item,メニュー アイテムの選択
+Web Browser,Web ブラウザ,Insert JavaScript,JavaScript の挿入
+Web Browser,Web ブラウザ,Wait,Wait
+Web Browser,Web ブラウザ,Click,クリック
+Web Browser,Web ブラウザ,Check,チェックをつける
+Web Browser,Web ブラウザ,Get URL,URL の取得
+Web Browser,Web ブラウザ,Extract Table,テーブルの抽出
+Web Browser,Web ブラウザ,Extract Source,ソースの抽出
+Web Service,Web サービス,Execute Function,関数の実行
+Window,ウィンドウ,Focus,フォーカス
+Window,ウィンドウ,List Windows,ウィンドウをリスト化
+Window,ウィンドウ,Hide,非表示
+Window,ウィンドウ,Show,表示
+Window,ウィンドウ,Maximize,最大化
+Window,ウィンドウ,Minimize,最小化
+Window,ウィンドウ,Restore,復元
+Window,ウィンドウ,Close,閉じる
+Window,ウィンドウ,Move,移動
+Window,ウィンドウ,Resize,サイズ変更
+Window,ウィンドウ,Tile,並べて表示
+Window,ウィンドウ,Get Active Window,アクティブウィンドウの取得
+WMI,WMI,WMI Query,WMI クエリ
+XML,XML,Create Session,セッションの作成
+XML,XML,End Session,セッションの終了
+XML,XML,Create Node,ノードの作成
+XML,XML,Read Node,ノードの読込み
+XML,XML,Extract Node,ノードの抽出
+XML,XML,Edit Node,ノードの編集
+XML,XML,Delete Node,ノードの削除
+XML,XML,Get Node,ノードの取得
+XML,XML,Save,保存
+XML,XML,Convert,変換
+XML,XML,Validate,検証
+XML,XML,Sign,署名
+XML,XML,Verify Signature,署名の検証
+XML,XML,Import,インポート
+XML,XML,Export,エクスポート
+XML,XML,Evaluate XPath,XPath の評価
+XML,XML,Dataset to XML,データセットから XML
