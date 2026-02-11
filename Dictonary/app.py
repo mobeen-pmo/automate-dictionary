@@ -226,15 +226,49 @@ DATA_FILE = os.path.join(os.path.dirname(__file__), "Bilingual Automation Action
 @st.cache_data
 def load_data() -> pd.DataFrame:
     """Load and clean the bilingual catalog CSV."""
-    df = pd.read_csv(DATA_FILE, encoding="utf-8")
+    try:
+        df = pd.read_csv(DATA_FILE, encoding="utf-8")
+    except UnicodeDecodeError:
+        # Fallback for Windows-coded files
+        df = pd.read_csv(DATA_FILE, encoding="cp932")
+
+    # Normalize column names
+    # The app expects: Category, Action (English), Action (Japanese), Activity (English), Activity (Japanese)
+    # The CSV provided has: Category (English), Category (Japanese), Activity (English), Activity (Japanese)
+    
+    # 1. Map Category
+    if "Category" not in df.columns:
+        if "Category (English)" in df.columns:
+            df["Category"] = df["Category (English)"]
+        elif "Category (Japanese)" in df.columns:
+            df["Category"] = df["Category (Japanese)"]
+    
+    # 2. Ensure Action/Activity columns exist
+    # If Action is missing but Activity exists, we keep Activity.
+    # We just ensure the columns referenced in SEARCH_COLS and the UI exist.
+    required_cols = [
+        "Category",
+        "Action (English)",
+        "Action (Japanese)",
+        "Activity (English)",
+        "Activity (Japanese)"
+    ]
+    
+    for col in required_cols:
+        if col not in df.columns:
+            df[col] = ""
+
     # Drop the Source column — not needed in search UI
     if "Source" in df.columns:
         df = df.drop(columns=["Source"])
+        
     # Remove duplicate rows so each term appears only once
     df = df.drop_duplicates()
+    
     # Clean whitespace & fill blanks
     for col in df.columns:
         df[col] = df[col].astype(str).str.strip().replace("nan", "")
+        
     return df
 
 
