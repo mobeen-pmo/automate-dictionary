@@ -1,4 +1,4 @@
-Action (English),Action (Japanese),Activity (English),Activity (Japanese)
+Category (English),Category (Japanese),Activity (English),Activity (Japanese)
 Active Directory,Active Directory,Create User,ユーザーの作成
 Active Directory,Active Directory,Modify User,ユーザーの変更
 Active Directory,Active Directory,Create Group,グループの作成
@@ -639,5 +639,4 @@ XML,XML,Verify Signature,署名の検証
 XML,XML,Import,インポート
 XML,XML,Export,エクスポート
 XML,XML,Evaluate XPath,XPath の評価
-
 XML,XML,Dataset to XML,データセットから XML
