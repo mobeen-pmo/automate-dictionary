@@ -9,7 +9,7 @@ import os
 import re
 import io
 from deep_translator import GoogleTranslator
-from gtts import gTTS
+from gtts import gTTS  # New Import for Voice
 
 # ──────────────────────────────────────────────
 # 1. PAGE CONFIG
@@ -279,7 +279,7 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
     1. Finds text inside quotes.
     2. Matches with Glossary.
     3. Translates remainder.
-    4. Formats quotes professionally (「」 for JP, "" for EN).
+    4. Returns HTML (for display) and Plain text (for Audio/Copy).
     """
     
     # Setup Maps
@@ -311,10 +311,7 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
         if lookup_key in full_map:
             target_term = full_map[lookup_key]
             key = f"__GLOSSARY_{len(placeholders)}__"
-            
-            # Format: Highlighted HTML (Pure term)
-            # We will add brackets in the final step to ensure cleaner translation context
-            placeholders[key] = target_term
+            placeholders[key] = f"<span class='glossary-highlight'>{target_term}</span>"
             return key
         else:
             return match.group(0)
@@ -329,28 +326,16 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
     except Exception as e:
         return f"Error: {str(e)}", ""
 
-    # Restore & Format Brackets for Tone
+    # Restore
     final_html = translated_text
     final_plain = translated_text 
 
-    for key, term in placeholders.items():
-        # DETERMINE BRACKET STYLE BASED ON TARGET LANGUAGE
-        if direction == "En_to_Jp":
-            # Formal Japanese Style
-            formatted_term_html = f"「<span class='glossary-highlight'>{term}</span>」"
-            formatted_term_plain = f"「{term}」"
-        else:
-            # Standard English Style
-            formatted_term_html = f'"<span class='glossary-highlight'>{term}</span>"'
-            formatted_term_plain = f'"{term}"'
+    for key, val_html in placeholders.items():
+        # Plain text cleanup (remove HTML tags)
+        val_plain = re.sub(r'<[^>]+>', '', val_html)
         
-        # Replace in HTML
-        final_html = final_html.replace(key, formatted_term_html)
-        final_html = final_html.replace(key.replace("_", " "), formatted_term_html)
-        
-        # Replace in Plain Text
-        final_plain = final_plain.replace(key, formatted_term_plain)
-        final_plain = final_plain.replace(key.replace("_", " "), formatted_term_plain)
+        final_html = final_html.replace(key, val_html).replace(key.replace("_", " "), val_html)
+        final_plain = final_plain.replace(key, val_plain).replace(key.replace("_", " "), val_plain)
 
     return final_html, final_plain
 
@@ -439,9 +424,8 @@ with tab_trans:
     st.markdown("""
     <div style="background:#F0F9FF;padding:15px;border-radius:10px;border:1px solid #BAE6FD;margin-bottom:20px;">
         <strong style="color:#0072B5">🤖 Smart Detection:</strong><br>
-        Put Automate terms in quotes. The app will detect them, insert the official dictionary term, 
-        and format the sentence professionally.<br>
-        <small style="color:#64748B">The translator preserves the formality of your input (e.g., formal email vs casual chat).</small>
+        Put Automate terms in quotes. The app will detect them, find the exact translation from the dictionary, and highlight it.<br>
+        <small style="color:#64748B">Supported quotes: "...", '...', 「...」, 『...』</small>
     </div>
     """, unsafe_allow_html=True)
 
@@ -456,14 +440,14 @@ with tab_trans:
         dir_code = "En_to_Jp"
         src_label = "🇺🇸 English Input"
         tgt_label = "🇯🇵 Japanese Output"
-        placeholder_txt = 'Example: Dear Team, I want to use the "Excel Open" action for the process.'
-        target_lang_code = 'ja'
+        placeholder_txt = 'Example: I want to use the "Excel Open" action.'
+        target_lang_code = 'ja' # Speak Japanese
     else:
         dir_code = "Jp_to_En"
         src_label = "🇯🇵 Japanese Input"
         tgt_label = "🇺🇸 English Output"
         placeholder_txt = 'Example: 「Excel 開く」アクションを使用したいです。'
-        target_lang_code = 'en'
+        target_lang_code = 'en' # Speak English
 
     col_t1, col_t2 = st.columns(2)
     
@@ -483,13 +467,12 @@ with tab_trans:
             st.markdown(f'<div class="result-box">{html_result}</div>', unsafe_allow_html=True)
             
             # Audio Player (Voice)
-            st.caption("🔊 Listen to translation:")
             audio_bytes = generate_audio(plain_result, lang=target_lang_code)
             if audio_bytes:
                 st.audio(audio_bytes, format="audio/mp3")
             
             # Copy Code
-            st.caption("📋 Copy raw text:")
+            st.caption("Copy raw text:")
             st.code(plain_result, language=None)
             
         elif not source_text and btn:
@@ -501,6 +484,6 @@ with tab_trans:
 # 7. FIXED FOOTER
 # ──────────────────────────────────────────────
 st.markdown(
-    '<div class="custom-footer">© 2026 | Developed by <span>Mirza Muhammad Mobeen</span></div>',
+    '<div class="custom-footer">© 2025 | Developed by <span>Mirza Muhammad Mobeen</span></div>',
     unsafe_allow_html=True,
 )
