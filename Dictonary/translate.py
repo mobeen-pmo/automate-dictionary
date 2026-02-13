@@ -7,9 +7,7 @@ import streamlit as st
 import pandas as pd
 import os
 import re
-import io
 from deep_translator import GoogleTranslator
-from gtts import gTTS  # New Import for Voice
 
 # ──────────────────────────────────────────────
 # 1. PAGE CONFIG
@@ -193,10 +191,17 @@ DATA_FILE = os.path.join(os.path.dirname(__file__), "Bilingual Automation Action
 
 @st.cache_data
 def load_data() -> pd.DataFrame:
+    """Loads and cleans the CSV. Includes error handling for missing files."""
+    if not os.path.exists(DATA_FILE):
+        return pd.DataFrame() # Return empty DF to handle gracefully later
+
     try:
         df = pd.read_csv(DATA_FILE, encoding="utf-8")
     except UnicodeDecodeError:
         df = pd.read_csv(DATA_FILE, encoding="cp932")
+    except Exception as e:
+        # Fallback for other file errors
+        return pd.DataFrame()
 
     # Normalize Columns
     if "Category" not in df.columns:
@@ -229,6 +234,11 @@ def load_data() -> pd.DataFrame:
     return df
 
 df = load_data()
+
+# Check if data loaded correctly
+if df.empty:
+    st.error(f"⚠️ **Error:** The data file was not found or could not be read.\nPlease ensure `{os.path.basename(DATA_FILE)}` is in the same directory as `app.py`.")
+    st.stop()
 
 # ──────────────────────────────────────────────
 # 4. SIDEBAR
@@ -272,14 +282,15 @@ with st.sidebar:
 
 
 # ──────────────────────────────────────────────
-# 5. TRANSLATION & AUDIO LOGIC
+# 5. TRANSLATION LOGIC (NO VOICE, STRONG ERROR HANDLING)
 # ──────────────────────────────────────────────
 def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"):
     """
     1. Finds text inside quotes.
     2. Matches with Glossary.
     3. Translates remainder.
-    4. Returns HTML (for display) and Plain text (for Audio/Copy).
+    4. Formats quotes professionally.
+    Returns: (HTML Result, Plain Text Result, Error Message)
     """
     
     # Setup Maps
@@ -311,7 +322,8 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
         if lookup_key in full_map:
             target_term = full_map[lookup_key]
             key = f"__GLOSSARY_{len(placeholders)}__"
-            placeholders[key] = f"<span class='glossary-highlight'>{target_term}</span>"
+            # Store pure term
+            placeholders[key] = target_term
             return key
         else:
             return match.group(0)
@@ -319,36 +331,37 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
     # Substitution
     processed_text = pattern.sub(replacer, text)
     
-    # Translate
+    # Translate with Error Handling
     try:
         translator = GoogleTranslator(source=src_lang, target=tgt_lang)
         translated_text = translator.translate(processed_text)
     except Exception as e:
-        return f"Error: {str(e)}", ""
+        # Return friendly error
+        return None, None, f"Translation service failed. Please check your internet connection.\nDetails: {str(e)}"
 
-    # Restore
+    if not translated_text:
+        return None, None, "The translation service returned an empty response."
+
+    # Restore & Format Brackets
     final_html = translated_text
     final_plain = translated_text 
 
-    for key, val_html in placeholders.items():
-        # Plain text cleanup (remove HTML tags)
-        val_plain = re.sub(r'<[^>]+>', '', val_html)
+    for key, term in placeholders.items():
+        # Determine Bracket Style
+        if direction == "En_to_Jp":
+            # Formal Japanese Style
+            formatted_term_html = f"「<span class='glossary-highlight'>{term}</span>」"
+            formatted_term_plain = f"「{term}」"
+        else:
+            # Standard English Style
+            formatted_term_html = f'"<span class='glossary-highlight'>{term}</span>"'
+            formatted_term_plain = f'"{term}"'
         
-        final_html = final_html.replace(key, val_html).replace(key.replace("_", " "), val_html)
-        final_plain = final_plain.replace(key, val_plain).replace(key.replace("_", " "), val_plain)
+        # Replace
+        final_html = final_html.replace(key, formatted_term_html).replace(key.replace("_", " "), formatted_term_html)
+        final_plain = final_plain.replace(key, formatted_term_plain).replace(key.replace("_", " "), formatted_term_plain)
 
-    return final_html, final_plain
-
-def generate_audio(text, lang='en'):
-    """Generates audio bytes from text using gTTS."""
-    try:
-        tts = gTTS(text=text, lang=lang)
-        audio_fp = io.BytesIO()
-        tts.write_to_fp(audio_fp)
-        return audio_fp
-    except Exception as e:
-        st.error(f"Audio generation failed: {e}")
-        return None
+    return final_html, final_plain, None
 
 # ──────────────────────────────────────────────
 # 6. MAIN PAGE
@@ -424,8 +437,9 @@ with tab_trans:
     st.markdown("""
     <div style="background:#F0F9FF;padding:15px;border-radius:10px;border:1px solid #BAE6FD;margin-bottom:20px;">
         <strong style="color:#0072B5">🤖 Smart Detection:</strong><br>
-        Put Automate terms in quotes. The app will detect them, find the exact translation from the dictionary, and highlight it.<br>
-        <small style="color:#64748B">Supported quotes: "...", '...', 「...」, 『...』</small>
+        Put Automate terms in quotes. The app will detect them, insert the official dictionary term, 
+        and format the sentence professionally.<br>
+        <small style="color:#64748B">The translator preserves the formality of your input.</small>
     </div>
     """, unsafe_allow_html=True)
 
@@ -440,14 +454,12 @@ with tab_trans:
         dir_code = "En_to_Jp"
         src_label = "🇺🇸 English Input"
         tgt_label = "🇯🇵 Japanese Output"
-        placeholder_txt = 'Example: I want to use the "Excel Open" action.'
-        target_lang_code = 'ja' # Speak Japanese
+        placeholder_txt = 'Example: Dear Team, I want to use the "Excel Open" action for the process.'
     else:
         dir_code = "Jp_to_En"
         src_label = "🇯🇵 Japanese Input"
         tgt_label = "🇺🇸 English Output"
         placeholder_txt = 'Example: 「Excel 開く」アクションを使用したいです。'
-        target_lang_code = 'en' # Speak English
 
     col_t1, col_t2 = st.columns(2)
     
@@ -461,29 +473,27 @@ with tab_trans:
         
         if btn and source_text:
             with st.spinner("Translating..."):
-                html_result, plain_result = smart_translate_quotes_bidirectional(source_text, df, direction=dir_code)
+                html_result, plain_result, error_msg = smart_translate_quotes_bidirectional(source_text, df, direction=dir_code)
             
-            # HTML Result (Visual)
-            st.markdown(f'<div class="result-box">{html_result}</div>', unsafe_allow_html=True)
-            
-            # Audio Player (Voice)
-            audio_bytes = generate_audio(plain_result, lang=target_lang_code)
-            if audio_bytes:
-                st.audio(audio_bytes, format="audio/mp3")
-            
-            # Copy Code
-            st.caption("Copy raw text:")
-            st.code(plain_result, language=None)
+            if error_msg:
+                st.error(error_msg)
+            else:
+                # HTML Result (Visual)
+                st.markdown(f'<div class="result-box">{html_result}</div>', unsafe_allow_html=True)
+                
+                # Copy Code (Hidden in st.code block for easy copy)
+                st.caption("📋 Copy raw text:")
+                st.code(plain_result, language=None)
             
         elif not source_text and btn:
-            st.warning("Please enter text.")
+            st.warning("Please enter text to translate.")
         else:
             st.markdown('<div class="result-box" style="color:#94A3B8;display:flex;align-items:center;justify-content:center;">Translation will appear here...</div>', unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────
-# 7. FIXED FOOTER
+# 7.FOOTER
 # ──────────────────────────────────────────────
 st.markdown(
-    '<div class="custom-footer">© 2025 | Developed by <span>Mirza Muhammad Mobeen</span></div>',
+    '<div class="custom-footer">© 2026 | Developed by <span>Mirza Muhammad Mobeen</span></div>',
     unsafe_allow_html=True,
 )
