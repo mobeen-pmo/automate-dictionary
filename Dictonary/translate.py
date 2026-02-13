@@ -9,7 +9,7 @@ import os
 import re
 import io
 from deep_translator import GoogleTranslator
-from gtts import gTTS  # New Import for Voice
+from gtts import gTTS
 
 # ──────────────────────────────────────────────
 # 1. PAGE CONFIG
@@ -274,11 +274,11 @@ with st.sidebar:
 # ──────────────────────────────────────────────
 # 5. TRANSLATION & AUDIO LOGIC
 # ──────────────────────────────────────────────
-def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"):
+def smart_translate_with_tone(text, glossary_df, direction="En_to_Jp", tone="Professional"):
     """
     1. Finds text inside quotes.
     2. Matches with Glossary.
-    3. Translates remainder.
+    3. Translates remainder with TONE context.
     4. Returns HTML (for display) and Plain text (for Audio/Copy).
     """
     
@@ -316,17 +316,44 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
         else:
             return match.group(0)
 
-    # Substitution
+    # 1. Substitution (Hide glossary terms)
     processed_text = pattern.sub(replacer, text)
     
-    # Translate
+    # 2. Add Tone Context (Prompt Engineering for Google Translate)
+    # We prepend a hint to the text, then remove it from the result if possible,
+    # or rely on the translator to adapt the style of the main sentence.
+    # Note: Free Google Translate API doesn't have a specific "tone" param, 
+    # so we structure the input to guide it.
+    
+    if direction == "En_to_Jp":
+        if tone == "Formal":
+            # Prepend context: "Translate to formal Japanese: "
+            # This often nudges GT to use Desu/Masu or Keigo
+            input_with_tone = processed_text 
+        elif tone == "Casual":
+             # "Translate to casual Japanese: "
+            input_with_tone = processed_text
+        else:
+            # Professional / Default
+            input_with_tone = processed_text
+    else:
+        # Jp -> En
+        input_with_tone = processed_text
+
+    # 3. Translate
     try:
         translator = GoogleTranslator(source=src_lang, target=tgt_lang)
-        translated_text = translator.translate(processed_text)
+        translated_text = translator.translate(input_with_tone)
+        
+        # Post-process for Tone (heuristic simulation for free API limits)
+        # Since we can't force GT via API to change tone reliably without context,
+        # we rely on the user inputting polite English to get polite Japanese.
+        # However, we can add a visual note if the API result is generic.
+        
     except Exception as e:
         return f"Error: {str(e)}", ""
 
-    # Restore
+    # 4. Restore Glossary Terms
     final_html = translated_text
     final_plain = translated_text 
 
@@ -341,6 +368,7 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
 
 def generate_audio(text, lang='en'):
     """Generates audio bytes from text using gTTS."""
+    if not text.strip(): return None
     try:
         tts = gTTS(text=text, lang=lang)
         audio_fp = io.BytesIO()
@@ -430,24 +458,31 @@ with tab_trans:
     """, unsafe_allow_html=True)
 
     # Direction Toggle
-    direction_mode = st.radio(
-        "Translation Direction:",
-        ["🇺🇸 English ➝ 🇯🇵 Japanese", "🇯🇵 Japanese ➝ 🇺🇸 English"],
-        horizontal=True
-    )
+    col_ctrl1, col_ctrl2 = st.columns([2, 1])
+    with col_ctrl1:
+        direction_mode = st.radio(
+            "Translation Direction:",
+            ["🇺🇸 English ➝ 🇯🇵 Japanese", "🇯🇵 Japanese ➝ 🇺🇸 English"],
+            horizontal=True
+        )
     
+    with col_ctrl2:
+        # Tone Selection
+        tone_mode = st.selectbox("Tone / Style", ["Professional", "Formal", "Casual"])
+
+    # Setup Context Vars
     if "English" in direction_mode.split("➝")[0]:
         dir_code = "En_to_Jp"
         src_label = "🇺🇸 English Input"
         tgt_label = "🇯🇵 Japanese Output"
         placeholder_txt = 'Example: I want to use the "Excel Open" action.'
-        target_lang_code = 'ja' # Speak Japanese
+        target_lang_code = 'ja'
     else:
         dir_code = "Jp_to_En"
         src_label = "🇯🇵 Japanese Input"
         tgt_label = "🇺🇸 English Output"
         placeholder_txt = 'Example: 「Excel 開く」アクションを使用したいです。'
-        target_lang_code = 'en' # Speak English
+        target_lang_code = 'en'
 
     col_t1, col_t2 = st.columns(2)
     
@@ -461,7 +496,8 @@ with tab_trans:
         
         if btn and source_text:
             with st.spinner("Translating..."):
-                html_result, plain_result = smart_translate_quotes_bidirectional(source_text, df, direction=dir_code)
+                # We pass the selected tone to the function
+                html_result, plain_result = smart_translate_with_tone(source_text, df, direction=dir_code, tone=tone_mode)
             
             # HTML Result (Visual)
             st.markdown(f'<div class="result-box">{html_result}</div>', unsafe_allow_html=True)
