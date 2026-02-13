@@ -200,7 +200,6 @@ def load_data() -> pd.DataFrame:
     except UnicodeDecodeError:
         df = pd.read_csv(DATA_FILE, encoding="cp932")
     except Exception as e:
-        # Fallback for other file errors
         return pd.DataFrame()
 
     # Normalize Columns
@@ -336,7 +335,6 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
         translator = GoogleTranslator(source=src_lang, target=tgt_lang)
         translated_text = translator.translate(processed_text)
     except Exception as e:
-        # Return friendly error
         return None, None, f"Translation service failed. Please check your internet connection.\nDetails: {str(e)}"
 
     if not translated_text:
@@ -353,8 +351,8 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
             formatted_term_html = f"「<span class='glossary-highlight'>{term}</span>」"
             formatted_term_plain = f"「{term}」"
         else:
-            # Standard English Style
-            formatted_term_html = f'"<span class='glossary-highlight'>{term}</span>"'
+            # Standard English Style - FIXED QUOTES HERE using triple quotes for safety
+            formatted_term_html = f""" "<span class='glossary-highlight'>{term}</span>" """
             formatted_term_plain = f'"{term}"'
         
         # Replace
@@ -491,7 +489,7 @@ with tab_trans:
             st.markdown('<div class="result-box" style="color:#94A3B8;display:flex;align-items:center;justify-content:center;">Translation will appear here...</div>', unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────
-# 7.FOOTER
+# 7. FOOTER
 # ──────────────────────────────────────────────
 st.markdown(
     '<div class="custom-footer">© 2026 | Developed by <span>Mirza Muhammad Mobeen</span></div>',
