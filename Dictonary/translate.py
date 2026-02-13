@@ -7,7 +7,9 @@ import streamlit as st
 import pandas as pd
 import os
 import re
+import io
 from deep_translator import GoogleTranslator
+from gtts import gTTS  # New Import for Voice
 
 # ──────────────────────────────────────────────
 # 1. PAGE CONFIG
@@ -229,14 +231,14 @@ def load_data() -> pd.DataFrame:
 df = load_data()
 
 # ──────────────────────────────────────────────
-# 4. SIDEBAR (FILTERS RESTORED)
+# 4. SIDEBAR
 # ──────────────────────────────────────────────
 with st.sidebar:
     st.markdown('<p class="sidebar-title">🔤 Automate Dictionary</p>', unsafe_allow_html=True)
     st.markdown('<p style="font-size:0.82rem;color:#94A3B8;margin-top:-4px;">Bilingual RPA Dictionary</p>', unsafe_allow_html=True)
     st.markdown("---")
 
-    # Category Filter Logic
+    # Category Filter
     cat_map = {} 
     for _, row in df[["Category", "Category (Japanese)"]].drop_duplicates().iterrows():
         en = row["Category"]
@@ -255,7 +257,7 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # Quick Stats
+    # Stats
     col_s1, col_s2 = st.columns(2)
     with col_s1:
         st.markdown(f'<div class="sidebar-stat"><div class="stat-num">{len(df)}</div><div class="stat-label">Terms</div></div>', unsafe_allow_html=True)
@@ -270,89 +272,83 @@ with st.sidebar:
 
 
 # ──────────────────────────────────────────────
-# 5. TRANSLATION LOGIC (BI-DIRECTIONAL & QUOTED)
+# 5. TRANSLATION & AUDIO LOGIC
 # ──────────────────────────────────────────────
 def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"):
     """
-    1. Finds text inside quotes: "...", '...', or Japanese quotes 「...」, 『...』
-    2. Checks if that text exists in Glossary based on direction.
-    3. Replaces it with a placeholder.
-    4. Translates the rest.
-    5. Fills placeholder with target term (highlighted).
+    1. Finds text inside quotes.
+    2. Matches with Glossary.
+    3. Translates remainder.
+    4. Returns HTML (for display) and Plain text (for Audio/Copy).
     """
     
-    # 1. SETUP MAPS BASED ON DIRECTION
+    # Setup Maps
     if direction == "En_to_Jp":
-        # Source: English -> Target: Japanese
         src_lang, tgt_lang = 'en', 'ja'
         action_map = dict(zip(glossary_df["Action (English)"].str.lower(), glossary_df["Action (Japanese)"]))
         activity_map = dict(zip(glossary_df["Activity (English)"].str.lower(), glossary_df["Activity (Japanese)"]))
     else:
-        # Source: Japanese -> Target: English
         src_lang, tgt_lang = 'ja', 'en'
-        # Note: Japanese text usually doesn't need .lower(), but we do it for consistency
         action_map = dict(zip(glossary_df["Action (Japanese)"], glossary_df["Action (English)"]))
         activity_map = dict(zip(glossary_df["Activity (Japanese)"], glossary_df["Activity (English)"]))
     
     full_map = {**action_map, **activity_map}
 
-    # 2. REGEX TO FIND QUOTED TEXT
-    # Matches: "word", 'word', 「word」, 『word』
-    # Group 2: "...", Group 4: '...', Group 6: 「...」, Group 8: 『...』
+    # Regex: "...", '...', 「...」, 『...』
     pattern = re.compile(r'("([^"]+)")|(\'([^\']+)\')|(「([^」]+)」)|(『([^』]+)』)')
     
     placeholders = {}
     
     def replacer(match):
-        # Extract the actual content inside the quotes
         if match.group(2): term = match.group(2)
         elif match.group(4): term = match.group(4)
         elif match.group(6): term = match.group(6)
         elif match.group(8): term = match.group(8)
         else: return match.group(0)
 
-        # Lookup Check (Lower case for English source, standard for Japanese)
         lookup_key = term.lower() if direction == "En_to_Jp" else term
         
         if lookup_key in full_map:
             target_term = full_map[lookup_key]
             key = f"__GLOSSARY_{len(placeholders)}__"
-            
-            # Format: Highlighted HTML
             placeholders[key] = f"<span class='glossary-highlight'>{target_term}</span>"
             return key
         else:
-            # Not in glossary, return original full match (including quotes)
             return match.group(0)
 
-    # 3. REPLACE & TRANSLATE
+    # Substitution
     processed_text = pattern.sub(replacer, text)
     
+    # Translate
     try:
         translator = GoogleTranslator(source=src_lang, target=tgt_lang)
         translated_text = translator.translate(processed_text)
     except Exception as e:
         return f"Error: {str(e)}", ""
 
-    # 4. RESTORE PLACEHOLDERS
+    # Restore
     final_html = translated_text
     final_plain = translated_text 
 
     for key, val_html in placeholders.items():
-        # Clean plain text version (remove span tags)
+        # Plain text cleanup (remove HTML tags)
         val_plain = re.sub(r'<[^>]+>', '', val_html)
         
-        # Replace in HTML Output
-        final_html = final_html.replace(key, val_html)
-        # Handle potential Google Translate spacing (e.g. __ GLOSSARY __)
-        final_html = final_html.replace(key.replace("_", " "), val_html) 
-        
-        # Replace in Plain Output
-        final_plain = final_plain.replace(key, val_plain)
-        final_plain = final_plain.replace(key.replace("_", " "), val_plain)
+        final_html = final_html.replace(key, val_html).replace(key.replace("_", " "), val_html)
+        final_plain = final_plain.replace(key, val_plain).replace(key.replace("_", " "), val_plain)
 
     return final_html, final_plain
 
+def generate_audio(text, lang='en'):
+    """Generates audio bytes from text using gTTS."""
+    try:
+        tts = gTTS(text=text, lang=lang)
+        audio_fp = io.BytesIO()
+        tts.write_to_fp(audio_fp)
+        return audio_fp
+    except Exception as e:
+        st.error(f"Audio generation failed: {e}")
+        return None
 
 # ──────────────────────────────────────────────
 # 6. MAIN PAGE
@@ -369,9 +365,7 @@ tab_dict, tab_trans = st.tabs(["📖 Dictionary Search", "🤖 Smart Translator"
 with tab_dict:
     query = st.text_input("search_input", placeholder="Search term (e.g., 'Excel', 'Browser')...", label_visibility="collapsed")
     
-    # Filter Logic
     filtered = df.copy()
-    
     if selected_cats:
         filtered = filtered[filtered["Category"].isin(selected_cats)]
 
@@ -392,7 +386,6 @@ with tab_dict:
             st.markdown('<div class="no-results"><div class="emoji">🔍</div><p>No terms found.</p></div>', unsafe_allow_html=True)
         else:
             st.markdown(f'<span class="cat-badge" style="margin-bottom:15px;">Found {len(filtered)} terms</span>', unsafe_allow_html=True)
-            
             display_df = filtered.head(100)
             for _, row in display_df.iterrows():
                 cat = row.get("Category", "")
@@ -443,17 +436,18 @@ with tab_trans:
         horizontal=True
     )
     
-    # Determine Logic vars based on selection
     if "English" in direction_mode.split("➝")[0]:
         dir_code = "En_to_Jp"
         src_label = "🇺🇸 English Input"
         tgt_label = "🇯🇵 Japanese Output"
         placeholder_txt = 'Example: I want to use the "Excel Open" action.'
+        target_lang_code = 'ja' # Speak Japanese
     else:
         dir_code = "Jp_to_En"
         src_label = "🇯🇵 Japanese Input"
         tgt_label = "🇺🇸 English Output"
         placeholder_txt = 'Example: 「Excel 開く」アクションを使用したいです。'
+        target_lang_code = 'en' # Speak English
 
     col_t1, col_t2 = st.columns(2)
     
@@ -469,8 +463,13 @@ with tab_trans:
             with st.spinner("Translating..."):
                 html_result, plain_result = smart_translate_quotes_bidirectional(source_text, df, direction=dir_code)
             
-            # HTML Result
+            # HTML Result (Visual)
             st.markdown(f'<div class="result-box">{html_result}</div>', unsafe_allow_html=True)
+            
+            # Audio Player (Voice)
+            audio_bytes = generate_audio(plain_result, lang=target_lang_code)
+            if audio_bytes:
+                st.audio(audio_bytes, format="audio/mp3")
             
             # Copy Code
             st.caption("Copy raw text:")
