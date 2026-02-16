@@ -144,12 +144,6 @@ st.markdown(
     }
     .custom-footer span { color: #0072B5 !important; font-weight: 600; }
     
-    /* ── Tabs Styling ── */
-    button[data-baseweb="tab"] {
-        font-size: 1rem !important;
-        font-weight: 600 !important;
-    }
-    
     /* ── Translation Highlight ── */
     .glossary-highlight {
         background-color: #FFF1F2;
@@ -191,7 +185,7 @@ DATA_FILE = os.path.join(os.path.dirname(__file__), "Bilingual Automation Action
 
 @st.cache_data
 def load_data() -> pd.DataFrame:
-    """Loads and cleans the CSV. Includes error handling for missing files."""
+    """Loads and cleans the CSV."""
     if not os.path.exists(DATA_FILE):
         return pd.DataFrame() 
 
@@ -199,7 +193,7 @@ def load_data() -> pd.DataFrame:
         df = pd.read_csv(DATA_FILE, encoding="utf-8")
     except UnicodeDecodeError:
         df = pd.read_csv(DATA_FILE, encoding="cp932")
-    except Exception as e:
+    except Exception:
         return pd.DataFrame()
 
     # Normalize Columns
@@ -234,9 +228,9 @@ def load_data() -> pd.DataFrame:
 
 df = load_data()
 
-# Check if data loaded correctly
+# Error handling if CSV is missing
 if df.empty:
-    st.error(f"⚠️ **Error:** The data file was not found or could not be read.\nPlease ensure `{os.path.basename(DATA_FILE)}` is in the same directory as `app.py`.")
+    st.error(f"⚠️ **Error:** Data file not found. Ensure `{os.path.basename(DATA_FILE)}` is in the directory.")
     st.stop()
 
 # ──────────────────────────────────────────────
@@ -281,15 +275,12 @@ with st.sidebar:
 
 
 # ──────────────────────────────────────────────
-# 5. TRANSLATION LOGIC (WITH ROBUST HIGHLIGHTING)
+# 5. TRANSLATION LOGIC (FIXED PLACEHOLDERS)
 # ──────────────────────────────────────────────
 def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"):
     """
-    1. Finds text inside quotes.
-    2. Matches with Glossary.
-    3. Translates remainder.
-    4. Formats quotes professionally.
-    Returns: (HTML Result, Plain Text Result, Error Message)
+    Translates text while protecting quoted terms.
+    Uses 'safe' tokens like [ID:0] that Google Translate won't translate to Japanese.
     """
     
     # Setup Maps
@@ -304,12 +295,13 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
     
     full_map = {**action_map, **activity_map}
 
-    # Regex: "...", '...', 「...」, 『...』
+    # Regex to find quoted terms: "word", 'word', 「word」, 『word』
     pattern = re.compile(r'("([^"]+)")|(\'([^\']+)\')|(「([^」]+)」)|(『([^』]+)』)')
     
     placeholders = {}
     
     def replacer(match):
+        # Extract term
         if match.group(2): term = match.group(2)
         elif match.group(4): term = match.group(4)
         elif match.group(6): term = match.group(6)
@@ -320,8 +312,9 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
         
         if lookup_key in full_map:
             target_term = full_map[lookup_key]
-            # Use a simpler placeholder to avoid translation messing it up
-            key = f"__GLOSSARY_{len(placeholders)}__"
+            # FIX: Use a token that looks like a technical ID, not a word.
+            # Google preserves brackets and colons usually.
+            key = f"[ID:{len(placeholders)}]" 
             placeholders[key] = target_term
             return key
         else:
@@ -335,34 +328,34 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
         translator = GoogleTranslator(source=src_lang, target=tgt_lang)
         translated_text = translator.translate(processed_text)
     except Exception as e:
-        return None, None, f"Translation service failed. Please check your internet connection.\nDetails: {str(e)}"
+        return None, None, f"Translation Error: {str(e)}"
 
     if not translated_text:
-        return None, None, "The translation service returned an empty response."
+        return None, None, "Empty translation received."
 
-    # Restore & Format Brackets
+    # Restore
     final_html = translated_text
     final_plain = translated_text 
 
     for key, term in placeholders.items():
         # Determine Bracket Style
         if direction == "En_to_Jp":
-            # Formal Japanese Style
             formatted_term_html = f"「<span class='glossary-highlight'>{term}</span>」"
             formatted_term_plain = f"「{term}」"
         else:
-            # Standard English Style - Escaped quotes to prevent syntax errors
-            formatted_term_html = f'"<span class=\'glossary-highlight\'>{term}</span>"'
+            formatted_term_html = f""" "<span class='glossary-highlight'>{term}</span>" """
             formatted_term_plain = f'"{term}"'
         
-        # Robust Replacement (Case Insensitive Regex)
-        # Google Translate often changes __GLOSSARY_0__ to __Glossary_0__ or __ glossary_0 __
-        # This regex finds the key regardless of case or slight spacing changes
-        # e.g. matches "__GLOSSARY_0__", "__Glossary_0__", "__ GLOSSARY 0 __"
-        safe_key_pattern = re.compile(re.escape(key).replace("_", "[ _]*"), re.IGNORECASE)
+        # Robust Replacement:
+        # 1. Try replacing exact key: [ID:0]
+        final_html = final_html.replace(key, formatted_term_html)
+        final_plain = final_plain.replace(key, formatted_term_plain)
         
-        final_html = safe_key_pattern.sub(formatted_term_html, final_html)
-        final_plain = safe_key_pattern.sub(formatted_term_plain, final_plain)
+        # 2. Try replacing slightly mangled key (Google adds spaces: [ ID : 0 ])
+        # This regex matches the key even if there are spaces inside the brackets
+        escaped_key_regex = re.escape(key).replace(r"\:", r"\s*\:\s*").replace(r"\[", r"\[\s*").replace(r"\]", r"\s*\]")
+        final_html = re.sub(escaped_key_regex, formatted_term_html, final_html)
+        final_plain = re.sub(escaped_key_regex, formatted_term_plain, final_plain)
 
     return final_html, final_plain, None
 
