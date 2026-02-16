@@ -193,7 +193,7 @@ DATA_FILE = os.path.join(os.path.dirname(__file__), "Bilingual Automation Action
 def load_data() -> pd.DataFrame:
     """Loads and cleans the CSV. Includes error handling for missing files."""
     if not os.path.exists(DATA_FILE):
-        return pd.DataFrame() # Return empty DF to handle gracefully later
+        return pd.DataFrame() 
 
     try:
         df = pd.read_csv(DATA_FILE, encoding="utf-8")
@@ -281,7 +281,7 @@ with st.sidebar:
 
 
 # ──────────────────────────────────────────────
-# 5. TRANSLATION LOGIC (NO VOICE, STRONG ERROR HANDLING)
+# 5. TRANSLATION LOGIC (WITH ROBUST HIGHLIGHTING)
 # ──────────────────────────────────────────────
 def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"):
     """
@@ -320,8 +320,8 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
         
         if lookup_key in full_map:
             target_term = full_map[lookup_key]
+            # Use a simpler placeholder to avoid translation messing it up
             key = f"__GLOSSARY_{len(placeholders)}__"
-            # Store pure term
             placeholders[key] = target_term
             return key
         else:
@@ -330,7 +330,7 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
     # Substitution
     processed_text = pattern.sub(replacer, text)
     
-    # Translate with Error Handling
+    # Translate
     try:
         translator = GoogleTranslator(source=src_lang, target=tgt_lang)
         translated_text = translator.translate(processed_text)
@@ -351,13 +351,18 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
             formatted_term_html = f"「<span class='glossary-highlight'>{term}</span>」"
             formatted_term_plain = f"「{term}」"
         else:
-            # Standard English Style - FIXED QUOTES HERE using triple quotes for safety
-            formatted_term_html = f""" "<span class='glossary-highlight'>{term}</span>" """
+            # Standard English Style - Escaped quotes to prevent syntax errors
+            formatted_term_html = f'"<span class=\'glossary-highlight\'>{term}</span>"'
             formatted_term_plain = f'"{term}"'
         
-        # Replace
-        final_html = final_html.replace(key, formatted_term_html).replace(key.replace("_", " "), formatted_term_html)
-        final_plain = final_plain.replace(key, formatted_term_plain).replace(key.replace("_", " "), formatted_term_plain)
+        # Robust Replacement (Case Insensitive Regex)
+        # Google Translate often changes __GLOSSARY_0__ to __Glossary_0__ or __ glossary_0 __
+        # This regex finds the key regardless of case or slight spacing changes
+        # e.g. matches "__GLOSSARY_0__", "__Glossary_0__", "__ GLOSSARY 0 __"
+        safe_key_pattern = re.compile(re.escape(key).replace("_", "[ _]*"), re.IGNORECASE)
+        
+        final_html = safe_key_pattern.sub(formatted_term_html, final_html)
+        final_plain = safe_key_pattern.sub(formatted_term_plain, final_plain)
 
     return final_html, final_plain, None
 
@@ -479,7 +484,7 @@ with tab_trans:
                 # HTML Result (Visual)
                 st.markdown(f'<div class="result-box">{html_result}</div>', unsafe_allow_html=True)
                 
-                # Copy Code (Hidden in st.code block for easy copy)
+                # Copy Code
                 st.caption("📋 Copy raw text:")
                 st.code(plain_result, language=None)
             
@@ -489,7 +494,7 @@ with tab_trans:
             st.markdown('<div class="result-box" style="color:#94A3B8;display:flex;align-items:center;justify-content:center;">Translation will appear here...</div>', unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────
-# 7. FOOTER
+# 7.FOOTER
 # ──────────────────────────────────────────────
 st.markdown(
     '<div class="custom-footer">© 2026 | Developed by <span>Mirza Muhammad Mobeen</span></div>',
