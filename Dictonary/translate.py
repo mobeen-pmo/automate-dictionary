@@ -1,13 +1,18 @@
 """
-Automate Bilingual RPA Dictionary & Smart Translator
+Automate Bilingual RPA Dictionary & Smart Translator (Pro Version)
 Developed by Mirza Muhammad Mobeen
+Refined for Document Translation
 """
 
 import streamlit as st
 import pandas as pd
 import os
 import re
+import io
+import tempfile
 from deep_translator import GoogleTranslator
+from docx import Document
+from pdf2docx import Converter
 
 # ──────────────────────────────────────────────
 # 1. PAGE CONFIG
@@ -228,7 +233,6 @@ def load_data() -> pd.DataFrame:
 
 df = load_data()
 
-# Error handling if CSV is missing
 if df.empty:
     st.error(f"⚠️ **Error:** Data file not found. Ensure `{os.path.basename(DATA_FILE)}` is in the directory.")
     st.stop()
@@ -275,14 +279,18 @@ with st.sidebar:
 
 
 # ──────────────────────────────────────────────
-# 5. TRANSLATION LOGIC (FIXED PLACEHOLDERS)
+# 5. TRANSLATION LOGIC (TEXT & DOCS)
 # ──────────────────────────────────────────────
-def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"):
+
+def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=True):
     """
-    Translates text while protecting quoted terms.
-    Uses 'safe' tokens like [ID:0] that Google Translate won't translate to Japanese.
+    Core translation logic. 
+    return_html=True -> Returns HTML for UI display with highlighting.
+    return_html=False -> Returns plain string for file saving.
     """
-    
+    if not text or not text.strip():
+        return text
+
     # Setup Maps
     if direction == "En_to_Jp":
         src_lang, tgt_lang = 'en', 'ja'
@@ -301,7 +309,6 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
     placeholders = {}
     
     def replacer(match):
-        # Extract term
         if match.group(2): term = match.group(2)
         elif match.group(4): term = match.group(4)
         elif match.group(6): term = match.group(6)
@@ -312,9 +319,8 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
         
         if lookup_key in full_map:
             target_term = full_map[lookup_key]
-            # FIX: Use a token that looks like a technical ID, not a word.
-            # Google preserves brackets and colons usually.
-            key = f"[ID:{len(placeholders)}]" 
+            # Use unique token that won't be translated
+            key = f"[ID{len(placeholders)}]" 
             placeholders[key] = target_term
             return key
         else:
@@ -328,45 +334,101 @@ def smart_translate_quotes_bidirectional(text, glossary_df, direction="En_to_Jp"
         translator = GoogleTranslator(source=src_lang, target=tgt_lang)
         translated_text = translator.translate(processed_text)
     except Exception as e:
-        return None, None, f"Translation Error: {str(e)}"
+        return f"Error: {str(e)}"
 
     if not translated_text:
-        return None, None, "Empty translation received."
+        return text
 
-    # Restore
-    final_html = translated_text
-    final_plain = translated_text 
+    final_text = translated_text 
 
     for key, term in placeholders.items():
         # Determine Bracket Style
         if direction == "En_to_Jp":
-            formatted_term_html = f"「<span class='glossary-highlight'>{term}</span>」"
-            formatted_term_plain = f"「{term}」"
+            if return_html:
+                formatted_term = f"「<span class='glossary-highlight'>{term}</span>」"
+            else:
+                formatted_term = f"「{term}」"
         else:
-            formatted_term_html = f""" "<span class='glossary-highlight'>{term}</span>" """
-            formatted_term_plain = f'"{term}"'
+            if return_html:
+                formatted_term = f""" "<span class='glossary-highlight'>{term}</span>" """
+            else:
+                formatted_term = f'"{term}"'
         
-        # Robust Replacement:
-        # 1. Try replacing exact key: [ID:0]
-        final_html = final_html.replace(key, formatted_term_html)
-        final_plain = final_plain.replace(key, formatted_term_plain)
-        
-        # 2. Try replacing slightly mangled key (Google adds spaces: [ ID : 0 ])
-        # This regex matches the key even if there are spaces inside the brackets
-        escaped_key_regex = re.escape(key).replace(r"\:", r"\s*\:\s*").replace(r"\[", r"\[\s*").replace(r"\]", r"\s*\]")
-        final_html = re.sub(escaped_key_regex, formatted_term_html, final_html)
-        final_plain = re.sub(escaped_key_regex, formatted_term_plain, final_plain)
+        # Robust Replacement (handling spaces Google might add)
+        escaped_key_regex = re.escape(key).replace(r"\[", r"\[\s*").replace(r"\]", r"\s*\]")
+        final_text = re.sub(escaped_key_regex, formatted_term, final_text)
 
-    return final_html, final_plain, None
+    return final_text
 
 # ──────────────────────────────────────────────
-# 6. MAIN PAGE
+# 6. DOCUMENT PROCESSING FUNCTIONS
+# ──────────────────────────────────────────────
+def translate_docx_file(input_file, glossary_df, direction):
+    """
+    Opens a DOCX, iterates paragraphs and tables, translates content,
+    and returns a BytesIO object of the new file.
+    """
+    doc = Document(input_file)
+    
+    # 1. Translate Paragraphs
+    for para in doc.paragraphs:
+        if para.text.strip():
+            # Translate the full text of the paragraph to maintain context
+            translated = smart_translate_text(para.text, glossary_df, direction, return_html=False)
+            para.text = translated
+
+    # 2. Translate Tables
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for para in cell.paragraphs:
+                    if para.text.strip():
+                        translated = smart_translate_text(para.text, glossary_df, direction, return_html=False)
+                        para.text = translated
+    
+    # Save to buffer
+    output_buffer = io.BytesIO()
+    doc.save(output_buffer)
+    output_buffer.seek(0)
+    return output_buffer
+
+def convert_and_translate_pdf(input_file, glossary_df, direction):
+    """
+    Converts PDF to DOCX (to keep layout), translates the DOCX,
+    and returns the DOCX buffer.
+    """
+    # Create temp files because pdf2docx requires file paths
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tf_input:
+        tf_input.write(input_file.read())
+        temp_input_path = tf_input.name
+        
+    temp_docx_path = temp_input_path.replace(".pdf", ".docx")
+    
+    try:
+        # Convert PDF -> DOCX
+        cv = Converter(temp_input_path)
+        cv.convert(temp_docx_path, start=0, end=None)
+        cv.close()
+        
+        # Translate the resulting DOCX
+        with open(temp_docx_path, "rb") as f:
+            docx_buffer = translate_docx_file(f, glossary_df, direction)
+            
+        return docx_buffer
+
+    finally:
+        # Cleanup
+        if os.path.exists(temp_input_path): os.remove(temp_input_path)
+        if os.path.exists(temp_docx_path): os.remove(temp_docx_path)
+
+# ──────────────────────────────────────────────
+# 7. MAIN PAGE & TABS
 # ──────────────────────────────────────────────
 st.markdown('<p class="hero-title">Automate Keywords Dictionary</p>', unsafe_allow_html=True)
 st.markdown('<p class="hero-subtitle">Bilingual Reference & Smart Translator</p>', unsafe_allow_html=True)
 
 # TABS
-tab_dict, tab_trans = st.tabs(["📖 Dictionary Search", "🤖 Smart Translator"])
+tab_dict, tab_trans, tab_files = st.tabs(["📖 Dictionary Search", "🤖 Smart Translator", "📄 Document Translator"])
 
 # ──────────────────────────────────────────────
 # TAB 1: DICTIONARY SEARCH
@@ -427,7 +489,7 @@ with tab_dict:
                 st.markdown(card_html, unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────
-# TAB 2: SMART TRANSLATOR
+# TAB 2: SMART TRANSLATOR (TEXT)
 # ──────────────────────────────────────────────
 with tab_trans:
     st.markdown("""
@@ -441,9 +503,10 @@ with tab_trans:
 
     # Direction Toggle
     direction_mode = st.radio(
-        "Translation Direction:",
+        "Translation Direction (Text):",
         ["🇺🇸 English ➝ 🇯🇵 Japanese", "🇯🇵 Japanese ➝ 🇺🇸 English"],
-        horizontal=True
+        horizontal=True,
+        key="text_dir"
     )
     
     if "English" in direction_mode.split("➝")[0]:
@@ -462,24 +525,24 @@ with tab_trans:
     with col_t1:
         st.subheader(src_label)
         source_text = st.text_area("Write here...", height=200, placeholder=placeholder_txt)
-        btn = st.button("Translate", type="primary", use_container_width=True)
+        btn = st.button("Translate Text", type="primary", use_container_width=True)
 
     with col_t2:
         st.subheader(tgt_label)
         
         if btn and source_text:
             with st.spinner("Translating..."):
-                html_result, plain_result, error_msg = smart_translate_quotes_bidirectional(source_text, df, direction=dir_code)
+                # Call Shared Logic
+                html_result = smart_translate_text(source_text, df, direction=dir_code, return_html=True)
+                # For copy paste, we call again or strip html (calling again is cleaner for logic sep)
+                plain_result = smart_translate_text(source_text, df, direction=dir_code, return_html=False)
             
-            if error_msg:
-                st.error(error_msg)
-            else:
-                # HTML Result (Visual)
-                st.markdown(f'<div class="result-box">{html_result}</div>', unsafe_allow_html=True)
-                
-                # Copy Code
-                st.caption("📋 Copy raw text:")
-                st.code(plain_result, language=None)
+            # HTML Result (Visual)
+            st.markdown(f'<div class="result-box">{html_result}</div>', unsafe_allow_html=True)
+            
+            # Copy Code
+            st.caption("📋 Copy raw text:")
+            st.code(plain_result, language=None)
             
         elif not source_text and btn:
             st.warning("Please enter text to translate.")
@@ -487,7 +550,62 @@ with tab_trans:
             st.markdown('<div class="result-box" style="color:#94A3B8;display:flex;align-items:center;justify-content:center;">Translation will appear here...</div>', unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────
-# 7.FOOTER
+# TAB 3: DOCUMENT TRANSLATOR
+# ──────────────────────────────────────────────
+with tab_files:
+    st.markdown("""
+    <div style="background:#FDF2F8;padding:15px;border-radius:10px;border:1px solid #FCC2D7;margin-bottom:20px;">
+        <strong style="color:#BE185D">📄 File Translator (Beta):</strong><br>
+        Upload <b>Word (.docx)</b> or <b>PDF (.pdf)</b> files. 
+        The system will translate the content while attempting to <b>preserve the original layout</b> (tables, headers, etc.).
+        <br><small>Note: PDFs will be converted to editable Word documents for the best layout preservation.</small>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Direction Toggle for Files
+    file_dir_mode = st.radio(
+        "Translation Direction (File):",
+        ["🇺🇸 English ➝ 🇯🇵 Japanese", "🇯🇵 Japanese ➝ 🇺🇸 English"],
+        horizontal=True,
+        key="file_dir"
+    )
+    
+    f_dir_code = "En_to_Jp" if "English" in file_dir_mode.split("➝")[0] else "Jp_to_En"
+
+    uploaded_file = st.file_uploader("Upload your document", type=["docx", "pdf"])
+
+    if uploaded_file is not None:
+        file_ext = uploaded_file.name.split(".")[-1].lower()
+        
+        st.info(f"File '{uploaded_file.name}' detected. Ready to translate.")
+        
+        if st.button("🚀 Start File Translation", type="primary"):
+            with st.spinner("Processing document... This may take a moment to preserve layout..."):
+                try:
+                    output_data = None
+                    out_name = f"Translated_{uploaded_file.name}"
+                    
+                    if file_ext == "docx":
+                        output_data = translate_docx_file(uploaded_file, df, f_dir_code)
+                    
+                    elif file_ext == "pdf":
+                        output_data = convert_and_translate_pdf(uploaded_file, df, f_dir_code)
+                        out_name = out_name.replace(".pdf", ".docx") # PDFs become DOCX
+                    
+                    if output_data:
+                        st.success("✅ Translation Complete!")
+                        st.download_button(
+                            label="📥 Download Translated Document",
+                            data=output_data,
+                            file_name=out_name,
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        )
+                except Exception as e:
+                    st.error(f"Error processing file: {str(e)}")
+
+
+# ──────────────────────────────────────────────
+# 8.FOOTER
 # ──────────────────────────────────────────────
 st.markdown(
     '<div class="custom-footer">© 2026 | Developed by <span>Mirza Muhammad Mobeen</span></div>',
