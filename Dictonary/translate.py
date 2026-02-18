@@ -1,7 +1,7 @@
 """
 Automate Bilingual RPA Dictionary & Smart Translator (Pro Version)
 Developed by Mirza Muhammad Mobeen
-Refined for Document Translation
+Refined for: Percentage-based Progress Indicators
 """
 
 import streamlit as st
@@ -10,6 +10,8 @@ import os
 import re
 import io
 import tempfile
+import openpyxl
+import time
 from deep_translator import GoogleTranslator
 from docx import Document
 from pdf2docx import Converter
@@ -172,11 +174,9 @@ st.markdown(
         margin-bottom: 10px;
     }
     
-    /* ── Direction Toggle ── */
-    div[role="radiogroup"] {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1rem;
+    /* ── Progress Bar Styling ── */
+    .stProgress > div > div > div > div {
+        background-color: #0072B5;
     }
     </style>
     """,
@@ -201,7 +201,6 @@ def load_data() -> pd.DataFrame:
     except Exception:
         return pd.DataFrame()
 
-    # Normalize Columns
     if "Category" not in df.columns:
         if "Category (English)" in df.columns:
             df["Category"] = df["Category (English)"]
@@ -225,7 +224,6 @@ def load_data() -> pd.DataFrame:
         
     df = df.drop_duplicates()
     
-    # Clean Data
     for col in df.columns:
         df[col] = df[col].astype(str).str.strip().replace("nan", "")
         
@@ -245,7 +243,6 @@ with st.sidebar:
     st.markdown('<p style="font-size:0.82rem;color:#94A3B8;margin-top:-4px;">Bilingual RPA Dictionary</p>', unsafe_allow_html=True)
     st.markdown("---")
 
-    # Category Filter
     cat_map = {} 
     for _, row in df[["Category", "Category (Japanese)"]].drop_duplicates().iterrows():
         en = row["Category"]
@@ -263,8 +260,6 @@ with st.sidebar:
     selected_cats = [cat_map[lbl] for lbl in selected_labels]
 
     st.markdown("---")
-
-    # Stats
     col_s1, col_s2 = st.columns(2)
     with col_s1:
         st.markdown(f'<div class="sidebar-stat"><div class="stat-num">{len(df)}</div><div class="stat-label">Terms</div></div>', unsafe_allow_html=True)
@@ -273,7 +268,6 @@ with st.sidebar:
 
     st.markdown("---")
     view_all = st.toggle("📊 View All Data", value=False)
-
     st.markdown("---")
     st.markdown('<p style="text-align:center;font-size:0.75rem;color:#CBD5E1;">Developed by<br><b>Mirza Muhammad Mobeen</b></p>', unsafe_allow_html=True)
 
@@ -282,14 +276,16 @@ with st.sidebar:
 # 5. TRANSLATION LOGIC (TEXT & DOCS)
 # ──────────────────────────────────────────────
 
-def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=True):
+def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=True, cache=None):
     """
-    Core translation logic. 
-    return_html=True -> Returns HTML for UI display with highlighting.
-    return_html=False -> Returns plain string for file saving.
+    Core translation logic with Caching support for speed.
     """
-    if not text or not text.strip():
+    if not isinstance(text, str) or not text.strip():
         return text
+
+    # CACHE CHECK
+    if cache is not None and text in cache:
+        return cache[text]
 
     # Setup Maps
     if direction == "En_to_Jp":
@@ -303,9 +299,7 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
     
     full_map = {**action_map, **activity_map}
 
-    # Regex to find quoted terms: "word", 'word', 「word」, 『word』
     pattern = re.compile(r'("([^"]+)")|(\'([^\']+)\')|(「([^」]+)」)|(『([^』]+)』)')
-    
     placeholders = {}
     
     def replacer(match):
@@ -319,17 +313,14 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
         
         if lookup_key in full_map:
             target_term = full_map[lookup_key]
-            # Use unique token that won't be translated
             key = f"[ID{len(placeholders)}]" 
             placeholders[key] = target_term
             return key
         else:
             return match.group(0)
 
-    # Substitution
     processed_text = pattern.sub(replacer, text)
     
-    # Translate
     try:
         translator = GoogleTranslator(source=src_lang, target=tgt_lang)
         translated_text = translator.translate(processed_text)
@@ -340,9 +331,7 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
         return text
 
     final_text = translated_text 
-
     for key, term in placeholders.items():
-        # Determine Bracket Style
         if direction == "En_to_Jp":
             if return_html:
                 formatted_term = f"「<span class='glossary-highlight'>{term}</span>」"
@@ -354,72 +343,189 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
             else:
                 formatted_term = f'"{term}"'
         
-        # Robust Replacement (handling spaces Google might add)
         escaped_key_regex = re.escape(key).replace(r"\[", r"\[\s*").replace(r"\]", r"\s*\]")
         final_text = re.sub(escaped_key_regex, formatted_term, final_text)
+
+    # SAVE TO CACHE
+    if cache is not None:
+        cache[text] = final_text
 
     return final_text
 
 # ──────────────────────────────────────────────
-# 6. DOCUMENT PROCESSING FUNCTIONS
+# 6. DOCUMENT PROCESSING (WITH % STATUS)
 # ──────────────────────────────────────────────
-def translate_docx_file(input_file, glossary_df, direction):
-    """
-    Opens a DOCX, iterates paragraphs and tables, translates content,
-    and returns a BytesIO object of the new file.
-    """
+
+def translate_docx_file(input_file, glossary_df, direction, progress_bar=None, status_text=None):
     doc = Document(input_file)
     
-    # 1. Translate Paragraphs
+    # 1. Count Total Items (Paragraphs + Table Cells)
+    total_items = len(doc.paragraphs)
+    for table in doc.tables:
+        for row in table.rows:
+            total_items += len(row.cells)
+    
+    if total_items == 0: total_items = 1
+    current_item = 0
+    translation_memory = {} # Local Cache for this file
+
+    # Helper to update progress
+    def update_prog():
+        nonlocal current_item
+        current_item += 1
+        pct = int((current_item / total_items) * 100)
+        
+        if progress_bar: 
+            progress_bar.progress(min(current_item / total_items, 1.0))
+        if status_text: 
+            status_text.text(f"Processing... {pct}%")
+
+    # Translate Paragraphs
     for para in doc.paragraphs:
         if para.text.strip():
-            # Translate the full text of the paragraph to maintain context
-            translated = smart_translate_text(para.text, glossary_df, direction, return_html=False)
+            translated = smart_translate_text(para.text, glossary_df, direction, return_html=False, cache=translation_memory)
             para.text = translated
+        update_prog()
 
-    # 2. Translate Tables
+    # Translate Tables
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
-                for para in cell.paragraphs:
-                    if para.text.strip():
-                        translated = smart_translate_text(para.text, glossary_df, direction, return_html=False)
-                        para.text = translated
+                # We iterate paragraphs inside cells
+                full_text = ""
+                for p in cell.paragraphs:
+                    full_text += p.text + "\n"
+                
+                if full_text.strip():
+                     # Simple approach: translate combined text and replace first paragraph
+                    translated = smart_translate_text(full_text.strip(), glossary_df, direction, return_html=False, cache=translation_memory)
+                    cell.text = translated
+                update_prog()
     
-    # Save to buffer
     output_buffer = io.BytesIO()
     doc.save(output_buffer)
     output_buffer.seek(0)
     return output_buffer
 
-def convert_and_translate_pdf(input_file, glossary_df, direction):
-    """
-    Converts PDF to DOCX (to keep layout), translates the DOCX,
-    and returns the DOCX buffer.
-    """
-    # Create temp files because pdf2docx requires file paths
+def convert_and_translate_pdf(input_file, glossary_df, direction, progress_bar=None, status_text=None):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tf_input:
         tf_input.write(input_file.read())
         temp_input_path = tf_input.name
-        
     temp_docx_path = temp_input_path.replace(".pdf", ".docx")
     
     try:
-        # Convert PDF -> DOCX
+        if status_text: status_text.text("Converting PDF to editable format...")
         cv = Converter(temp_input_path)
         cv.convert(temp_docx_path, start=0, end=None)
         cv.close()
         
-        # Translate the resulting DOCX
+        if status_text: status_text.text("Starting Translation...")
         with open(temp_docx_path, "rb") as f:
-            docx_buffer = translate_docx_file(f, glossary_df, direction)
-            
+            docx_buffer = translate_docx_file(f, glossary_df, direction, progress_bar, status_text)
         return docx_buffer
-
     finally:
-        # Cleanup
         if os.path.exists(temp_input_path): os.remove(temp_input_path)
         if os.path.exists(temp_docx_path): os.remove(temp_docx_path)
+
+def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, progress_bar=None, status_text=None):
+    """
+    Translates Excel with caching and percentage progress.
+    """
+    output_buffer = io.BytesIO()
+    translation_memory = {}
+
+    if is_legacy:
+        # Legacy XLS handling
+        try:
+            xls = pd.read_excel(input_file, sheet_name=None)
+            total_cells = sum(df.size for df in xls.values()) 
+            if total_cells == 0: total_cells = 1
+            current_count = 0
+            
+            with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
+                for sheet_name, df_sheet in xls.items():
+                    # Custom map function to update progress
+                    def progress_map(x):
+                        nonlocal current_count
+                        current_count += 1
+                        if current_count % 10 == 0: 
+                             pct = int((current_count / total_cells) * 100)
+                             if progress_bar: progress_bar.progress(min(current_count / total_cells, 1.0))
+                             if status_text: status_text.text(f"Processing... {pct}%")
+                        
+                        return smart_translate_text(x, glossary_df, direction, False, cache=translation_memory) if isinstance(x, str) else x
+
+                    # Translate body
+                    df_sheet = df_sheet.map(progress_map)
+                    # Translate headers
+                    df_sheet.columns = [smart_translate_text(str(c), glossary_df, direction, False, cache=translation_memory) for c in df_sheet.columns]
+                    df_sheet.to_excel(writer, sheet_name=sheet_name, index=False)
+            output_buffer.seek(0)
+            return output_buffer
+        except Exception as e:
+            return None 
+    else:
+        # Modern XLSX (OpenPyXL)
+        wb = openpyxl.load_workbook(input_file)
+        
+        # 1. Pre-calculate total non-empty string cells
+        cells_to_process = []
+        if status_text: status_text.text("Analyzing file structure...")
+        
+        for sheet in wb.worksheets:
+            for row in sheet.iter_rows():
+                for cell in row:
+                    if isinstance(cell.value, str) and cell.value.strip():
+                        cells_to_process.append(cell)
+        
+        total_cells = len(cells_to_process)
+        if total_cells == 0: total_cells = 1
+        
+        # 2. Iterate and Translate
+        for i, cell in enumerate(cells_to_process):
+            translated = smart_translate_text(cell.value, glossary_df, direction, return_html=False, cache=translation_memory)
+            cell.value = translated
+            
+            # Update Progress
+            if i % 5 == 0 or i == total_cells - 1:
+                pct = int(((i + 1) / total_cells) * 100)
+                if progress_bar: progress_bar.progress((i + 1) / total_cells)
+                if status_text: status_text.text(f"Processing... {pct}%")
+
+        wb.save(output_buffer)
+        output_buffer.seek(0)
+        return output_buffer
+
+def translate_csv_file(input_file, glossary_df, direction, progress_bar=None, status_text=None):
+    try:
+        df_csv = pd.read_csv(input_file)
+        translation_memory = {}
+        total_cells = df_csv.size
+        if total_cells == 0: total_cells = 1
+        current_count = 0
+        
+        def progress_map(x):
+            nonlocal current_count
+            current_count += 1
+            if current_count % 20 == 0:
+                 pct = int((current_count / total_cells) * 100)
+                 if progress_bar: progress_bar.progress(min(current_count / total_cells, 1.0))
+                 if status_text: status_text.text(f"Processing... {pct}%")
+            
+            return smart_translate_text(x, glossary_df, direction, False, cache=translation_memory) if isinstance(x, str) else x
+
+        df_csv = df_csv.map(progress_map)
+        df_csv.columns = [smart_translate_text(str(c), glossary_df, direction, False, cache=translation_memory) for c in df_csv.columns]
+        
+        if progress_bar: progress_bar.progress(1.0)
+        if status_text: status_text.text("Processing... 100%")
+        
+        output_buffer = io.BytesIO()
+        df_csv.to_csv(output_buffer, index=False, encoding='utf-8-sig')
+        output_buffer.seek(0)
+        return output_buffer
+    except Exception as e:
+        return None
 
 # ──────────────────────────────────────────────
 # 7. MAIN PAGE & TABS
@@ -501,7 +607,6 @@ with tab_trans:
     </div>
     """, unsafe_allow_html=True)
 
-    # Direction Toggle
     direction_mode = st.radio(
         "Translation Direction (Text):",
         ["🇺🇸 English ➝ 🇯🇵 Japanese", "🇯🇵 Japanese ➝ 🇺🇸 English"],
@@ -532,15 +637,10 @@ with tab_trans:
         
         if btn and source_text:
             with st.spinner("Translating..."):
-                # Call Shared Logic
                 html_result = smart_translate_text(source_text, df, direction=dir_code, return_html=True)
-                # For copy paste, we call again or strip html (calling again is cleaner for logic sep)
                 plain_result = smart_translate_text(source_text, df, direction=dir_code, return_html=False)
             
-            # HTML Result (Visual)
             st.markdown(f'<div class="result-box">{html_result}</div>', unsafe_allow_html=True)
-            
-            # Copy Code
             st.caption("📋 Copy raw text:")
             st.code(plain_result, language=None)
             
@@ -555,14 +655,13 @@ with tab_trans:
 with tab_files:
     st.markdown("""
     <div style="background:#FDF2F8;padding:15px;border-radius:10px;border:1px solid #FCC2D7;margin-bottom:20px;">
-        <strong style="color:#BE185D">📄 File Translator (Beta):</strong><br>
-        Upload <b>Word (.docx)</b> or <b>PDF (.pdf)</b> files. 
+        <strong style="color:#BE185D">📄 File Translator (Beta)):</strong><br>
+        Upload <b>Docs</b> (.docx, .pdf) or <b>Spreadsheets</b> (.xlsx, .xls, .csv).
         The system will translate the content while attempting to <b>preserve the original layout</b> (tables, headers, etc.).
-        <br><small>Note: PDFs will be converted to editable Word documents for the best layout preservation.</small>
+        <br><small>Note: PDFs and .xls files will be converted to modern editable formats (.docx / .xlsx).</small>
     </div>
     """, unsafe_allow_html=True)
 
-    # Direction Toggle for Files
     file_dir_mode = st.radio(
         "Translation Direction (File):",
         ["🇺🇸 English ➝ 🇯🇵 Japanese", "🇯🇵 Japanese ➝ 🇺🇸 English"],
@@ -572,37 +671,61 @@ with tab_files:
     
     f_dir_code = "En_to_Jp" if "English" in file_dir_mode.split("➝")[0] else "Jp_to_En"
 
-    uploaded_file = st.file_uploader("Upload your document", type=["docx", "pdf"])
+    uploaded_file = st.file_uploader("Upload your document", type=["docx", "pdf", "xlsx", "xls", "csv"])
 
     if uploaded_file is not None:
         file_ext = uploaded_file.name.split(".")[-1].lower()
+        st.info(f"File detected: {uploaded_file.name}")
         
-        st.info(f"File '{uploaded_file.name}' detected. Ready to translate.")
-        
-        if st.button("🚀 Start File Translation", type="primary"):
-            with st.spinner("Processing document... This may take a moment to preserve layout..."):
-                try:
-                    output_data = None
-                    out_name = f"Translated_{uploaded_file.name}"
-                    
-                    if file_ext == "docx":
-                        output_data = translate_docx_file(uploaded_file, df, f_dir_code)
-                    
-                    elif file_ext == "pdf":
-                        output_data = convert_and_translate_pdf(uploaded_file, df, f_dir_code)
-                        out_name = out_name.replace(".pdf", ".docx") # PDFs become DOCX
-                    
-                    if output_data:
-                        st.success("✅ Translation Complete!")
-                        st.download_button(
-                            label="📥 Download Translated Document",
-                            data=output_data,
-                            file_name=out_name,
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        )
-                except Exception as e:
-                    st.error(f"Error processing file: {str(e)}")
+        if st.button("🚀 Start Translation", type="primary"):
+            
+            # ── PROGRESS BAR SETUP ──
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            try:
+                output_data = None
+                out_name = f"Translated_{uploaded_file.name}"
+                mime_type = "application/octet-stream"
+                
+                # Logic Branching
+                if file_ext == "docx":
+                    output_data = translate_docx_file(uploaded_file, df, f_dir_code, progress_bar, status_text)
+                    mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                
+                elif file_ext == "pdf":
+                    output_data = convert_and_translate_pdf(uploaded_file, df, f_dir_code, progress_bar, status_text)
+                    out_name = out_name.replace(".pdf", ".docx")
+                    mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                
+                elif file_ext == "xlsx":
+                    output_data = translate_excel_file(uploaded_file, df, f_dir_code, is_legacy=False, progress_bar=progress_bar, status_text=status_text)
+                    mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
+                elif file_ext == "xls":
+                    output_data = translate_excel_file(uploaded_file, df, f_dir_code, is_legacy=True, progress_bar=progress_bar, status_text=status_text)
+                    out_name = out_name.replace(".xls", ".xlsx")
+                    mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                
+                elif file_ext == "csv":
+                    output_data = translate_csv_file(uploaded_file, df, f_dir_code, progress_bar, status_text)
+                    mime_type = "text/csv"
+                
+                # Finalize
+                if output_data:
+                    progress_bar.progress(100)
+                    status_text.success("✅ Translation Complete!")
+                    st.download_button(
+                        label="📥 Download Translated Document",
+                        data=output_data,
+                        file_name=out_name,
+                        mime=mime_type
+                    )
+                else:
+                    status_text.error("Failed to generate output data.")
+                    
+            except Exception as e:
+                status_text.error(f"Error processing file: {str(e)}")
 
 # ──────────────────────────────────────────────
 # 8.FOOTER
