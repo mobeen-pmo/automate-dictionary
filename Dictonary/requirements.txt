@@ -3,3 +3,4 @@ pandas>=2.0.0
 deep-translator>=1.8.0
 python-docx 
 pdf2docx
+openpyxl
