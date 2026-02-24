@@ -1,7 +1,7 @@
 """
 Automate Bilingual RPA Dictionary & Smart Translator (Pro Version)
 Developed by Mirza Muhammad Mobeen
-Refined for: Percentage-based Progress Indicators
+Refined for: Voice Commands (Speech-to-Text), Visual Progress, & Caching
 """
 
 import streamlit as st
@@ -12,6 +12,8 @@ import io
 import tempfile
 import openpyxl
 import time
+import speech_recognition as sr  # NEW: For transcribing audio
+from streamlit_mic_recorder import mic_recorder # NEW: For capturing audio
 from deep_translator import GoogleTranslator
 from docx import Document
 from pdf2docx import Converter
@@ -20,7 +22,7 @@ from pdf2docx import Converter
 # 1. PAGE CONFIG
 # ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="Automate Keywords Dictionary & Translator",
+    page_title="Automate Keywords Dictionary",
     page_icon="🔤",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -184,7 +186,7 @@ st.markdown(
 )
 
 # ──────────────────────────────────────────────
-# 3. DATA LOADING
+# 3. DATA LOADING & STATE INIT
 # ──────────────────────────────────────────────
 DATA_FILE = os.path.join(os.path.dirname(__file__), "Bilingual Automation Action and Activity Catalog.csv")
 
@@ -230,6 +232,10 @@ def load_data() -> pd.DataFrame:
     return df
 
 df = load_data()
+
+# INITIALIZE SESSION STATE FOR TEXT INPUT
+if 'trans_input' not in st.session_state:
+    st.session_state.trans_input = ""
 
 if df.empty:
     st.error(f"⚠️ **Error:** Data file not found. Ensure `{os.path.basename(DATA_FILE)}` is in the directory.")
@@ -277,17 +283,12 @@ with st.sidebar:
 # ──────────────────────────────────────────────
 
 def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=True, cache=None):
-    """
-    Core translation logic with Caching support for speed.
-    """
     if not isinstance(text, str) or not text.strip():
         return text
 
-    # CACHE CHECK
     if cache is not None and text in cache:
         return cache[text]
 
-    # Setup Maps
     if direction == "En_to_Jp":
         src_lang, tgt_lang = 'en', 'ja'
         action_map = dict(zip(glossary_df["Action (English)"].str.lower(), glossary_df["Action (Japanese)"]))
@@ -346,20 +347,17 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
         escaped_key_regex = re.escape(key).replace(r"\[", r"\[\s*").replace(r"\]", r"\s*\]")
         final_text = re.sub(escaped_key_regex, formatted_term, final_text)
 
-    # SAVE TO CACHE
     if cache is not None:
         cache[text] = final_text
 
     return final_text
 
 # ──────────────────────────────────────────────
-# 6. DOCUMENT PROCESSING (WITH % STATUS)
+# 6. DOCUMENT PROCESSING
 # ──────────────────────────────────────────────
 
 def translate_docx_file(input_file, glossary_df, direction, progress_bar=None, status_text=None):
     doc = Document(input_file)
-    
-    # 1. Count Total Items (Paragraphs + Table Cells)
     total_items = len(doc.paragraphs)
     for table in doc.tables:
         for row in table.rows:
@@ -367,37 +365,28 @@ def translate_docx_file(input_file, glossary_df, direction, progress_bar=None, s
     
     if total_items == 0: total_items = 1
     current_item = 0
-    translation_memory = {} # Local Cache for this file
+    translation_memory = {} 
 
-    # Helper to update progress
     def update_prog():
         nonlocal current_item
         current_item += 1
         pct = int((current_item / total_items) * 100)
-        
-        if progress_bar: 
-            progress_bar.progress(min(current_item / total_items, 1.0))
-        if status_text: 
-            status_text.text(f"Processing... {pct}%")
+        if progress_bar: progress_bar.progress(min(current_item / total_items, 1.0))
+        if status_text: status_text.text(f"Processing... {pct}%")
 
-    # Translate Paragraphs
     for para in doc.paragraphs:
         if para.text.strip():
             translated = smart_translate_text(para.text, glossary_df, direction, return_html=False, cache=translation_memory)
             para.text = translated
         update_prog()
 
-    # Translate Tables
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
-                # We iterate paragraphs inside cells
                 full_text = ""
                 for p in cell.paragraphs:
                     full_text += p.text + "\n"
-                
                 if full_text.strip():
-                     # Simple approach: translate combined text and replace first paragraph
                     translated = smart_translate_text(full_text.strip(), glossary_df, direction, return_html=False, cache=translation_memory)
                     cell.text = translated
                 update_prog()
@@ -412,7 +401,6 @@ def convert_and_translate_pdf(input_file, glossary_df, direction, progress_bar=N
         tf_input.write(input_file.read())
         temp_input_path = tf_input.name
     temp_docx_path = temp_input_path.replace(".pdf", ".docx")
-    
     try:
         if status_text: status_text.text("Converting PDF to editable format...")
         cv = Converter(temp_input_path)
@@ -428,23 +416,16 @@ def convert_and_translate_pdf(input_file, glossary_df, direction, progress_bar=N
         if os.path.exists(temp_docx_path): os.remove(temp_docx_path)
 
 def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, progress_bar=None, status_text=None):
-    """
-    Translates Excel with caching and percentage progress.
-    """
     output_buffer = io.BytesIO()
     translation_memory = {}
-
     if is_legacy:
-        # Legacy XLS handling
         try:
             xls = pd.read_excel(input_file, sheet_name=None)
             total_cells = sum(df.size for df in xls.values()) 
             if total_cells == 0: total_cells = 1
             current_count = 0
-            
             with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
                 for sheet_name, df_sheet in xls.items():
-                    # Custom map function to update progress
                     def progress_map(x):
                         nonlocal current_count
                         current_count += 1
@@ -452,12 +433,9 @@ def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, pr
                              pct = int((current_count / total_cells) * 100)
                              if progress_bar: progress_bar.progress(min(current_count / total_cells, 1.0))
                              if status_text: status_text.text(f"Processing... {pct}%")
-                        
                         return smart_translate_text(x, glossary_df, direction, False, cache=translation_memory) if isinstance(x, str) else x
 
-                    # Translate body
                     df_sheet = df_sheet.map(progress_map)
-                    # Translate headers
                     df_sheet.columns = [smart_translate_text(str(c), glossary_df, direction, False, cache=translation_memory) for c in df_sheet.columns]
                     df_sheet.to_excel(writer, sheet_name=sheet_name, index=False)
             output_buffer.seek(0)
@@ -465,13 +443,9 @@ def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, pr
         except Exception as e:
             return None 
     else:
-        # Modern XLSX (OpenPyXL)
         wb = openpyxl.load_workbook(input_file)
-        
-        # 1. Pre-calculate total non-empty string cells
         cells_to_process = []
         if status_text: status_text.text("Analyzing file structure...")
-        
         for sheet in wb.worksheets:
             for row in sheet.iter_rows():
                 for cell in row:
@@ -481,17 +455,13 @@ def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, pr
         total_cells = len(cells_to_process)
         if total_cells == 0: total_cells = 1
         
-        # 2. Iterate and Translate
         for i, cell in enumerate(cells_to_process):
             translated = smart_translate_text(cell.value, glossary_df, direction, return_html=False, cache=translation_memory)
             cell.value = translated
-            
-            # Update Progress
             if i % 5 == 0 or i == total_cells - 1:
                 pct = int(((i + 1) / total_cells) * 100)
                 if progress_bar: progress_bar.progress((i + 1) / total_cells)
                 if status_text: status_text.text(f"Processing... {pct}%")
-
         wb.save(output_buffer)
         output_buffer.seek(0)
         return output_buffer
@@ -503,7 +473,6 @@ def translate_csv_file(input_file, glossary_df, direction, progress_bar=None, st
         total_cells = df_csv.size
         if total_cells == 0: total_cells = 1
         current_count = 0
-        
         def progress_map(x):
             nonlocal current_count
             current_count += 1
@@ -511,15 +480,12 @@ def translate_csv_file(input_file, glossary_df, direction, progress_bar=None, st
                  pct = int((current_count / total_cells) * 100)
                  if progress_bar: progress_bar.progress(min(current_count / total_cells, 1.0))
                  if status_text: status_text.text(f"Processing... {pct}%")
-            
             return smart_translate_text(x, glossary_df, direction, False, cache=translation_memory) if isinstance(x, str) else x
 
         df_csv = df_csv.map(progress_map)
         df_csv.columns = [smart_translate_text(str(c), glossary_df, direction, False, cache=translation_memory) for c in df_csv.columns]
-        
         if progress_bar: progress_bar.progress(1.0)
         if status_text: status_text.text("Processing... 100%")
-        
         output_buffer = io.BytesIO()
         df_csv.to_csv(output_buffer, index=False, encoding='utf-8-sig')
         output_buffer.seek(0)
@@ -541,7 +507,6 @@ tab_dict, tab_trans, tab_files = st.tabs(["📖 Dictionary Search", "🤖 Smart 
 # ──────────────────────────────────────────────
 with tab_dict:
     query = st.text_input("search_input", placeholder="Search term (e.g., 'Excel', 'Browser')...", label_visibility="collapsed")
-    
     filtered = df.copy()
     if selected_cats:
         filtered = filtered[filtered["Category"].isin(selected_cats)]
@@ -571,7 +536,6 @@ with tab_dict:
                 jp_act = row.get("Action (Japanese)", "")
                 en_activity = row.get("Activity (English)", "")
                 jp_activity = row.get("Activity (Japanese)", "")
-                
                 cat_display = f'{cat} <span class="cat-jp">({cat_jp})</span>' if cat_jp and cat_jp != cat else cat
 
                 card_html = f"""
@@ -595,7 +559,7 @@ with tab_dict:
                 st.markdown(card_html, unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────
-# TAB 2: SMART TRANSLATOR (TEXT)
+# TAB 2: SMART TRANSLATOR (VOICE ENABLED)
 # ──────────────────────────────────────────────
 with tab_trans:
     st.markdown("""
@@ -614,22 +578,77 @@ with tab_trans:
         key="text_dir"
     )
     
+    # Define Lang Codes for Speech Rec
     if "English" in direction_mode.split("➝")[0]:
         dir_code = "En_to_Jp"
         src_label = "🇺🇸 English Input"
         tgt_label = "🇯🇵 Japanese Output"
         placeholder_txt = 'Example: Dear Team, I want to use the "Excel Open" action for the process.'
+        speech_lang = "en-US"
     else:
         dir_code = "Jp_to_En"
         src_label = "🇯🇵 Japanese Input"
         tgt_label = "🇺🇸 English Output"
         placeholder_txt = 'Example: 「Excel 開く」アクションを使用したいです。'
+        speech_lang = "ja-JP"
 
     col_t1, col_t2 = st.columns(2)
     
     with col_t1:
         st.subheader(src_label)
-        source_text = st.text_area("Write here...", height=200, placeholder=placeholder_txt)
+        
+        # 🎙️ AUDIO RECORDER LOGIC
+        col_mic, col_label = st.columns([1, 4])
+        with col_mic:
+            # Mic recorder captures bytes
+            audio = mic_recorder(
+                start_prompt="🎤 Speak",
+                stop_prompt="🛑 Stop",
+                just_once=True,
+                key='recorder'
+            )
+        
+        # PROCESS AUDIO
+        if audio:
+            with st.spinner("🎧 Transcribing audio..."):
+                try:
+                    # Save bytes to temp wav file
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
+                        temp_wav.write(audio['bytes'])
+                        temp_wav_path = temp_wav.name
+                    
+                    # Recognize speech
+                    r = sr.Recognizer()
+                    with sr.AudioFile(temp_wav_path) as source:
+                        audio_data = r.record(source)
+                        # Detect text
+                        text = r.recognize_google(audio_data, language=speech_lang)
+                        # Update Session State
+                        st.session_state.trans_input = text
+                    
+                    # Cleanup
+                    os.remove(temp_wav_path)
+                    st.rerun() # Refresh to show text in box
+                except sr.UnknownValueError:
+                    st.warning("Could not understand audio.")
+                except sr.RequestError as e:
+                    st.error(f"Speech Service Error: {e}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+        # TEXT AREA (Linked to Session State)
+        def update_text_input():
+            st.session_state.trans_input = st.session_state.widget_input
+
+        source_text = st.text_area(
+            "Write here...", 
+            height=200, 
+            placeholder=placeholder_txt,
+            key="widget_input",
+            value=st.session_state.trans_input,
+            on_change=update_text_input
+        )
+        
         btn = st.button("Translate Text", type="primary", use_container_width=True)
 
     with col_t2:
@@ -655,10 +674,10 @@ with tab_trans:
 with tab_files:
     st.markdown("""
     <div style="background:#FDF2F8;padding:15px;border-radius:10px;border:1px solid #FCC2D7;margin-bottom:20px;">
-        <strong style="color:#BE185D">📄 File Translator (Beta)):</strong><br>
-        Upload <b>Docs</b> (.docx, .pdf) or <b>Spreadsheets</b> (.xlsx, .xls, .csv).
-        The system will translate the content while attempting to <b>preserve the original layout</b> (tables, headers, etc.).
-        <br><small>Note: PDFs and .xls files will be converted to modern editable formats (.docx / .xlsx).</small>
+        <strong style="color:#BE185D">📄 File Translator (Fast & Visual):</strong><br>
+        Upload Docs or Spreadsheets. The system will translate while preserving layout.
+        <br>
+        <small>Includes <b>Smart Caching</b>: Repeated words are translated instantly to save time.</small>
     </div>
     """, unsafe_allow_html=True)
 
@@ -679,7 +698,6 @@ with tab_files:
         
         if st.button("🚀 Start Translation", type="primary"):
             
-            # ── PROGRESS BAR SETUP ──
             progress_bar = st.progress(0)
             status_text = st.empty()
             
@@ -688,30 +706,24 @@ with tab_files:
                 out_name = f"Translated_{uploaded_file.name}"
                 mime_type = "application/octet-stream"
                 
-                # Logic Branching
                 if file_ext == "docx":
                     output_data = translate_docx_file(uploaded_file, df, f_dir_code, progress_bar, status_text)
                     mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                
                 elif file_ext == "pdf":
                     output_data = convert_and_translate_pdf(uploaded_file, df, f_dir_code, progress_bar, status_text)
                     out_name = out_name.replace(".pdf", ".docx")
                     mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                
                 elif file_ext == "xlsx":
                     output_data = translate_excel_file(uploaded_file, df, f_dir_code, is_legacy=False, progress_bar=progress_bar, status_text=status_text)
                     mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
                 elif file_ext == "xls":
                     output_data = translate_excel_file(uploaded_file, df, f_dir_code, is_legacy=True, progress_bar=progress_bar, status_text=status_text)
                     out_name = out_name.replace(".xls", ".xlsx")
                     mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                
                 elif file_ext == "csv":
                     output_data = translate_csv_file(uploaded_file, df, f_dir_code, progress_bar, status_text)
                     mime_type = "text/csv"
                 
-                # Finalize
                 if output_data:
                     progress_bar.progress(100)
                     status_text.success("✅ Translation Complete!")
