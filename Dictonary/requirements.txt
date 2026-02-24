@@ -4,3 +4,5 @@ deep-translator>=1.8.0
 python-docx 
 pdf2docx
 openpyxl
+SpeechRecognition
+streamlit-mic-recorder
