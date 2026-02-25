@@ -3,7 +3,7 @@ Automate Bilingual RPA Dictionary & Smart Translator (Pro Version)
 Developed by Mirza Muhammad Mobeen
 Refined for: Percentage-based Progress Indicators
 """
-
+#Libraries
 import streamlit as st
 import pandas as pd
 import os
