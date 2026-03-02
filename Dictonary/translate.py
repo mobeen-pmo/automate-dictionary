@@ -20,7 +20,7 @@ from pdf2docx import Converter
 # 1. PAGE CONFIG
 # ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="SCT Automate Keywords Dictionary & Translator",
+    page_title="Automate Keywords Dictionary & Translator",
     page_icon="🔤",
     layout="wide",
     initial_sidebar_state="expanded",
