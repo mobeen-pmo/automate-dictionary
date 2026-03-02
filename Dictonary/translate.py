@@ -20,7 +20,7 @@ from pdf2docx import Converter
 # 1. PAGE CONFIG
 # ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="Automate Keywords Dictionary & Translator",
+    page_title="SCT Automate Keywords Dictionary & Translator",
     page_icon="🔤",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -239,7 +239,7 @@ if df.empty:
 # 4. SIDEBAR
 # ──────────────────────────────────────────────
 with st.sidebar:
-    st.markdown('<p class="sidebar-title">🔤 Automate Dictionary</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sidebar-title">🔤 SCT Automate Dictionary</p>', unsafe_allow_html=True)
     st.markdown('<p style="font-size:0.82rem;color:#94A3B8;margin-top:-4px;">Bilingual RPA Dictionary</p>', unsafe_allow_html=True)
     st.markdown("---")
 
