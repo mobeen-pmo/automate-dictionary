@@ -530,7 +530,7 @@ def translate_csv_file(input_file, glossary_df, direction, progress_bar=None, st
 # ──────────────────────────────────────────────
 # 7. MAIN PAGE & TABS
 # ──────────────────────────────────────────────
-st.markdown('<p class="hero-title">Automate Keywords Dictionary</p>', unsafe_allow_html=True)
+st.markdown('<p class="hero-title">SCT Automate Keywords Dictionary</p>', unsafe_allow_html=True)
 st.markdown('<p class="hero-subtitle">Bilingual Reference & Smart Translator</p>', unsafe_allow_html=True)
 
 # TABS
