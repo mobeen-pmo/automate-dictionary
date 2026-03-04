@@ -677,7 +677,7 @@ with tab_files:
         file_ext = uploaded_file.name.split(".")[-1].lower()
         st.info(f"File detected: {uploaded_file.name}")
         
-        if st.button("🚀 Start Translation", type="primary"):
+        if st.button("Start Translation", type="primary"):
             
             # ── PROGRESS BAR SETUP ──
             progress_bar = st.progress(0)
