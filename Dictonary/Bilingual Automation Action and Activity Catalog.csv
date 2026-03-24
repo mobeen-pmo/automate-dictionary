@@ -588,7 +588,7 @@ Wait,Wait,Pixel,ピクセル
 Wait,Wait,Window,ウィンドウ
 Web Browser,Web ブラウザ,Open,ブラウザを開く
 Web Browser,Web ブラウザ,Close,ブラウザを閉じる
-Web Browser,Web ブラウザ,Assign Session,セッションの割当て
+Web Browser,Web ブラウザ,Create Session,セッションの割当て
 Web Browser,Web ブラウザ,Navigate,ページの移動
 Web Browser,Web ブラウザ,Refresh,更新
 Web Browser,Web ブラウザ,Back,戻る
