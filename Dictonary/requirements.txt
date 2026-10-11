@@ -4,3 +4,4 @@ deep-translator>=1.8.0
 python-docx 
 pdf2docx
 openpyxl
+translators>=5.8.9
