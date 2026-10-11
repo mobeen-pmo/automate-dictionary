@@ -1,7 +1,7 @@
 """
 Automate Bilingual RPA Dictionary & Smart Translator (Pro Version)
 Developed by Mirza Muhammad Mobeen
-Refined for: Percentage-based Progress Indicators
+Refined for: Percentage-based Progress Indicators & Bing Free Translation
 """
 #Libraries
 import streamlit as st
@@ -12,7 +12,7 @@ import io
 import tempfile
 import openpyxl
 import time
-from deep_translator import GoogleTranslator
+import translators as ts  # New library for free, multi-engine translation
 from docx import Document
 from pdf2docx import Converter
 
@@ -277,7 +277,7 @@ with st.sidebar:
 
 def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=True, cache=None):
     """
-    Core translation logic with Caching support for speed.
+    Core translation logic with Caching and Rate-Limit Retry support using Bing.
     """
     if not isinstance(text, str) or not text.strip():
         return text
@@ -320,11 +320,25 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
 
     processed_text = pattern.sub(replacer, text)
     
-    try:
-        translator = GoogleTranslator(source=src_lang, target=tgt_lang)
-        translated_text = translator.translate(processed_text)
-    except Exception as e:
-        return f"Error: {str(e)}"
+    # ── RETRY LOGIC FOR BING SCRAPER ──
+    max_retries = 3
+    translated_text = None
+    
+    for attempt in range(max_retries):
+        try:
+            # Uses the free Bing translation engine
+            translated_text = ts.translate_text(
+                processed_text, 
+                translator="bing", 
+                from_language=src_lang, 
+                to_language=tgt_lang
+            )
+            break  # Break out of loop if translation is successful
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)  # Exponential backoff
+                continue
+            return f"Error: {str(e)}"
 
     if not translated_text:
         return text
