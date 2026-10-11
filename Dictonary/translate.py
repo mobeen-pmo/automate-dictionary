@@ -1,7 +1,7 @@
 """
 Automate Bilingual RPA Dictionary & Smart Translator (Pro Version)
 Developed by Mirza Muhammad Mobeen
-Refined for: Percentage-based Progress Indicators & Rate-Limit Retries
+Refined for: Percentage-based Progress Indicators
 """
 #Libraries
 import streamlit as st
@@ -277,7 +277,7 @@ with st.sidebar:
 
 def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=True, cache=None):
     """
-    Core translation logic with Caching and Rate-Limit Retry support.
+    Core translation logic with Caching support for speed.
     """
     if not isinstance(text, str) or not text.strip():
         return text
@@ -320,23 +320,11 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
 
     processed_text = pattern.sub(replacer, text)
     
-    # ── RETRY LOGIC FOR GOOGLE API RATE LIMITS ──
-    max_retries = 3
-    translated_text = None
-    
-    for attempt in range(max_retries):
-        try:
-            translator = GoogleTranslator(source=src_lang, target=tgt_lang)
-            translated_text = translator.translate(processed_text)
-            break  # Break out of loop if translation is successful
-        except Exception as e:
-            error_msg = str(e).lower()
-            # If it's a rate limit error, wait and try again
-            if "too many requests" in error_msg or "429" in error_msg:
-                if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)  # Sleeps for 1s, then 2s...
-                    continue
-            return f"Error: {str(e)}"
+    try:
+        translator = GoogleTranslator(source=src_lang, target=tgt_lang)
+        translated_text = translator.translate(processed_text)
+    except Exception as e:
+        return f"Error: {str(e)}"
 
     if not translated_text:
         return text
