@@ -1,9 +1,9 @@
 """
 Automate Bilingual RPA Dictionary & Smart Translator (Pro Version)
 Developed by Mirza Muhammad Mobeen
-Refined for: Percentage-based Progress Indicators & Rate-Limit Bypassing
+Refined for: Percentage-based Progress Indicators
 """
-# Libraries
+#Libraries
 import streamlit as st
 import pandas as pd
 import os
@@ -12,7 +12,7 @@ import io
 import tempfile
 import openpyxl
 import time
-from deep_translator import MyMemoryTranslator
+from deep_translator import GoogleTranslator
 from docx import Document
 from pdf2docx import Converter
 
@@ -32,7 +32,7 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Hide Streamlit defaults */
+    /* ── Hide Streamlit defaults ── */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header[data-testid="stHeader"] {background: transparent !important;}
@@ -48,12 +48,12 @@ st.markdown(
         z-index: 99999 !important;
     }
 
-    /* Fonts & General */
+    /* ── Fonts & General ── */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     .block-container { padding-top: 2rem; padding-bottom: 5rem; }
 
-    /* Typography */
+    /* ── Typography ── */
     .hero-title {
         font-size: 2.6rem;
         font-weight: 800;
@@ -67,10 +67,10 @@ st.markdown(
         font-size: 1.05rem;
         color: #64748B !important;
         margin-top: 4px;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
     }
 
-    /* Inputs */
+    /* ── Inputs ── */
     div[data-testid="stTextInput"] > div > div > input,
     div[data-testid="stTextArea"] > div > div > textarea {
         font-size: 1.05rem;
@@ -85,7 +85,7 @@ st.markdown(
         box-shadow: 0 0 0 3px rgba(0, 114, 181, 0.12);
     }
 
-    /* Term Card */
+    /* ── Term Card ── */
     .term-card {
         background: #FFFFFF !important;
         border: 1px solid #E2E8F0;
@@ -111,7 +111,7 @@ st.markdown(
     }
     .cat-jp { color: #E11D48 !important; font-weight: 500; margin-left: 6px; }
 
-    /* Grid Layouts */
+    /* ── Grid Layouts ── */
     .card-grid {
         display: grid;
         grid-template-columns: 1fr auto 1fr;
@@ -130,7 +130,7 @@ st.markdown(
     .jp-block h4 { color: #E11D48 !important; }
     .arrow-divider { font-size: 1.6rem; color: #CBD5E1 !important; padding-top: 1.2rem; }
 
-    /* Sidebar & Footer */
+    /* ── Sidebar & Footer ── */
     section[data-testid="stSidebar"] { background: #F8FAFC !important; border-right: 1px solid #E2E8F0; }
     .sidebar-title { font-size: 1.1rem; font-weight: 700; color: #0072B5 !important; margin-bottom: 0.3rem; }
     .sidebar-stat {
@@ -151,7 +151,7 @@ st.markdown(
     }
     .custom-footer span { color: #0072B5 !important; font-weight: 600; }
     
-    /* Translation Highlight */
+    /* ── Translation Highlight ── */
     .glossary-highlight {
         background-color: #FFF1F2;
         color: #E11D48;
@@ -161,7 +161,7 @@ st.markdown(
         border: 1px solid #FECDD3;
     }
     
-    /* Result Box */
+    /* ── Result Box ── */
     .result-box {
         background: white;
         border: 2px solid #E2E8F0;
@@ -174,7 +174,7 @@ st.markdown(
         margin-bottom: 10px;
     }
     
-    /* Progress Bar Styling */
+    /* ── Progress Bar Styling ── */
     .stProgress > div > div > div > div {
         background-color: #0072B5;
     }
@@ -190,6 +190,7 @@ DATA_FILE = os.path.join(os.path.dirname(__file__), "Bilingual Automation Action
 
 @st.cache_data
 def load_data() -> pd.DataFrame:
+    """Loads and cleans the CSV."""
     if not os.path.exists(DATA_FILE):
         return pd.DataFrame() 
 
@@ -275,12 +276,17 @@ with st.sidebar:
 # ──────────────────────────────────────────────
 
 def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=True, cache=None):
+    """
+    Core translation logic with Caching support for speed.
+    """
     if not isinstance(text, str) or not text.strip():
         return text
 
+    # CACHE CHECK
     if cache is not None and text in cache:
         return cache[text]
 
+    # Setup Maps
     if direction == "En_to_Jp":
         src_lang, tgt_lang = 'en', 'ja'
         action_map = dict(zip(glossary_df["Action (English)"].str.lower(), glossary_df["Action (Japanese)"]))
@@ -314,21 +320,11 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
 
     processed_text = pattern.sub(replacer, text)
     
-    max_retries = 3
-    translated_text = None
-    
-    for attempt in range(max_retries):
-        try:
-            translator = MyMemoryTranslator(source=src_lang, target=tgt_lang)
-            translated_text = translator.translate(processed_text)
-            break
-        except Exception as e:
-            error_msg = str(e).lower()
-            if "too many requests" in error_msg or "429" in error_msg:
-                if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)
-                    continue
-            return f"Error: {str(e)}"
+    try:
+        translator = GoogleTranslator(source=src_lang, target=tgt_lang)
+        translated_text = translator.translate(processed_text)
+    except Exception as e:
+        return f"Error: {str(e)}"
 
     if not translated_text:
         return text
@@ -349,6 +345,7 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
         escaped_key_regex = re.escape(key).replace(r"\[", r"\[\s*").replace(r"\]", r"\s*\]")
         final_text = re.sub(escaped_key_regex, formatted_term, final_text)
 
+    # SAVE TO CACHE
     if cache is not None:
         cache[text] = final_text
 
@@ -361,6 +358,7 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
 def translate_docx_file(input_file, glossary_df, direction, progress_bar=None, status_text=None):
     doc = Document(input_file)
     
+    # 1. Count Total Items (Paragraphs + Table Cells)
     total_items = len(doc.paragraphs)
     for table in doc.tables:
         for row in table.rows:
@@ -368,8 +366,9 @@ def translate_docx_file(input_file, glossary_df, direction, progress_bar=None, s
     
     if total_items == 0: total_items = 1
     current_item = 0
-    translation_memory = {}
+    translation_memory = {} # Local Cache for this file
 
+    # Helper to update progress
     def update_prog():
         nonlocal current_item
         current_item += 1
@@ -380,20 +379,24 @@ def translate_docx_file(input_file, glossary_df, direction, progress_bar=None, s
         if status_text: 
             status_text.text(f"Processing... {pct}%")
 
+    # Translate Paragraphs
     for para in doc.paragraphs:
         if para.text.strip():
             translated = smart_translate_text(para.text, glossary_df, direction, return_html=False, cache=translation_memory)
             para.text = translated
         update_prog()
 
+    # Translate Tables
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
+                # We iterate paragraphs inside cells
                 full_text = ""
                 for p in cell.paragraphs:
                     full_text += p.text + "\n"
                 
                 if full_text.strip():
+                     # Simple approach: translate combined text and replace first paragraph
                     translated = smart_translate_text(full_text.strip(), glossary_df, direction, return_html=False, cache=translation_memory)
                     cell.text = translated
                 update_prog()
@@ -424,10 +427,14 @@ def convert_and_translate_pdf(input_file, glossary_df, direction, progress_bar=N
         if os.path.exists(temp_docx_path): os.remove(temp_docx_path)
 
 def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, progress_bar=None, status_text=None):
+    """
+    Translates Excel with caching and percentage progress.
+    """
     output_buffer = io.BytesIO()
     translation_memory = {}
 
     if is_legacy:
+        # Legacy XLS handling
         try:
             xls = pd.read_excel(input_file, sheet_name=None)
             total_cells = sum(df.size for df in xls.values()) 
@@ -436,6 +443,7 @@ def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, pr
             
             with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
                 for sheet_name, df_sheet in xls.items():
+                    # Custom map function to update progress
                     def progress_map(x):
                         nonlocal current_count
                         current_count += 1
@@ -443,17 +451,23 @@ def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, pr
                              pct = int((current_count / total_cells) * 100)
                              if progress_bar: progress_bar.progress(min(current_count / total_cells, 1.0))
                              if status_text: status_text.text(f"Processing... {pct}%")
+                        
                         return smart_translate_text(x, glossary_df, direction, False, cache=translation_memory) if isinstance(x, str) else x
 
+                    # Translate body
                     df_sheet = df_sheet.map(progress_map)
+                    # Translate headers
                     df_sheet.columns = [smart_translate_text(str(c), glossary_df, direction, False, cache=translation_memory) for c in df_sheet.columns]
                     df_sheet.to_excel(writer, sheet_name=sheet_name, index=False)
             output_buffer.seek(0)
             return output_buffer
-        except Exception:
+        except Exception as e:
             return None 
     else:
+        # Modern XLSX (OpenPyXL)
         wb = openpyxl.load_workbook(input_file)
+        
+        # 1. Pre-calculate total non-empty string cells
         cells_to_process = []
         if status_text: status_text.text("Analyzing file structure...")
         
@@ -466,10 +480,12 @@ def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, pr
         total_cells = len(cells_to_process)
         if total_cells == 0: total_cells = 1
         
+        # 2. Iterate and Translate
         for i, cell in enumerate(cells_to_process):
             translated = smart_translate_text(cell.value, glossary_df, direction, return_html=False, cache=translation_memory)
             cell.value = translated
             
+            # Update Progress
             if i % 5 == 0 or i == total_cells - 1:
                 pct = int(((i + 1) / total_cells) * 100)
                 if progress_bar: progress_bar.progress((i + 1) / total_cells)
@@ -494,6 +510,7 @@ def translate_csv_file(input_file, glossary_df, direction, progress_bar=None, st
                  pct = int((current_count / total_cells) * 100)
                  if progress_bar: progress_bar.progress(min(current_count / total_cells, 1.0))
                  if status_text: status_text.text(f"Processing... {pct}%")
+            
             return smart_translate_text(x, glossary_df, direction, False, cache=translation_memory) if isinstance(x, str) else x
 
         df_csv = df_csv.map(progress_map)
@@ -506,14 +523,14 @@ def translate_csv_file(input_file, glossary_df, direction, progress_bar=None, st
         df_csv.to_csv(output_buffer, index=False, encoding='utf-8-sig')
         output_buffer.seek(0)
         return output_buffer
-    except Exception:
+    except Exception as e:
         return None
 
 # ──────────────────────────────────────────────
 # 7. MAIN PAGE & TABS
 # ──────────────────────────────────────────────
-st.markdown('<div class="hero-title">SCT Automate Keywords Dictionary</div>', unsafe_allow_html=True)
-st.markdown('<div class="hero-subtitle">Bilingual Reference & Smart Translator</div>', unsafe_allow_html=True)
+st.markdown('<p class="hero-title">SCT Automate Keywords Dictionary</p>', unsafe_allow_html=True)
+st.markdown('<p class="hero-subtitle">Bilingual Reference & Smart Translator</p>', unsafe_allow_html=True)
 
 # TABS
 tab_dict, tab_trans, tab_files = st.tabs(["📖 Dictionary Search", "🤖 Smart Translator", "📄 Document Translator"])
@@ -522,7 +539,7 @@ tab_dict, tab_trans, tab_files = st.tabs(["📖 Dictionary Search", "🤖 Smart 
 # TAB 1: DICTIONARY SEARCH
 # ──────────────────────────────────────────────
 with tab_dict:
-    query = st.text_input("Search dictionary", placeholder="Search term (e.g., 'Excel', 'Browser')...", label_visibility="collapsed")
+    query = st.text_input("search_input", placeholder="Search term (e.g., 'Excel', 'Browser')...", label_visibility="collapsed")
     
     filtered = df.copy()
     if selected_cats:
@@ -533,7 +550,7 @@ with tab_dict:
         cols = ["Category", "Category (Japanese)", "Action (English)", "Action (Japanese)", "Activity (English)", "Activity (Japanese)"]
         mask = pd.Series(False, index=filtered.index)
         for col in cols:
-            mask = mask | filtered[col].astype(str).str.lower().str.contains(q, na=False)
+            mask = mask | filtered[col].str.lower().str.contains(q, na=False)
         filtered = filtered[mask]
 
     st.markdown("---")
@@ -542,9 +559,9 @@ with tab_dict:
         st.dataframe(filtered, use_container_width=True, hide_index=True)
     else:
         if filtered.empty:
-            st.info("🔍 No terms found matching your search.")
+            st.markdown('<div class="no-results"><div class="emoji">🔍</div><p>No terms found.</p></div>', unsafe_allow_html=True)
         else:
-            st.markdown(f'<span class="cat-badge">Found {len(filtered)} terms</span>', unsafe_allow_html=True)
+            st.markdown(f'<span class="cat-badge" style="margin-bottom:15px;">Found {len(filtered)} terms</span>', unsafe_allow_html=True)
             display_df = filtered.head(100)
             for _, row in display_df.iterrows():
                 cat = row.get("Category", "")
@@ -556,7 +573,8 @@ with tab_dict:
                 
                 cat_display = f'{cat} <span class="cat-jp">({cat_jp})</span>' if cat_jp and cat_jp != cat else cat
 
-                card_html = f"""<div class="term-card">
+                card_html = f"""
+                <div class="term-card">
                     <div class="cat-badge">{cat_display}</div>
                     <div class="card-grid">
                         <div class="lang-block en-block">
@@ -571,7 +589,8 @@ with tab_dict:
                             <div class="activity-val">{jp_activity}</div>
                         </div>
                     </div>
-                </div>"""
+                </div>
+                """
                 st.markdown(card_html, unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────
@@ -635,7 +654,7 @@ with tab_trans:
 with tab_files:
     st.markdown("""
     <div style="background:#FDF2F8;padding:15px;border-radius:10px;border:1px solid #FCC2D7;margin-bottom:20px;">
-        <strong style="color:#BE185D">📄 File Translator (Beta):</strong><br>
+        <strong style="color:#BE185D">📄 File Translator (Beta)):</strong><br>
         Upload <b>Docs</b> (.docx, .pdf) or <b>Spreadsheets</b> (.xlsx, .xls, .csv).
         The system will translate the content while attempting to <b>preserve the original layout</b> (tables, headers, etc.).
         <br><small>Note: PDFs and .xls files will be converted to modern editable formats (.docx / .xlsx).</small>
@@ -658,6 +677,8 @@ with tab_files:
         st.info(f"File detected: {uploaded_file.name}")
         
         if st.button("Start Translation", type="primary"):
+            
+            # ── PROGRESS BAR SETUP ──
             progress_bar = st.progress(0)
             status_text = st.empty()
             
@@ -666,6 +687,7 @@ with tab_files:
                 out_name = f"Translated_{uploaded_file.name}"
                 mime_type = "application/octet-stream"
                 
+                # Logic Branching
                 if file_ext == "docx":
                     output_data = translate_docx_file(uploaded_file, df, f_dir_code, progress_bar, status_text)
                     mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -688,6 +710,7 @@ with tab_files:
                     output_data = translate_csv_file(uploaded_file, df, f_dir_code, progress_bar, status_text)
                     mime_type = "text/csv"
                 
+                # Finalize
                 if output_data:
                     progress_bar.progress(100)
                     status_text.success("✅ Translation Complete!")
@@ -704,7 +727,7 @@ with tab_files:
                 status_text.error(f"Error processing file: {str(e)}")
 
 # ──────────────────────────────────────────────
-# 8. FOOTER
+# 8.FOOTER
 # ──────────────────────────────────────────────
 st.markdown(
     '<div class="custom-footer">© 2026 | Developed by <span>Mirza Muhammad Mobeen</span></div>',
