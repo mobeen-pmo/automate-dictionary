@@ -1,7 +1,7 @@
 """
 Automate Bilingual RPA Dictionary & Smart Translator (Pro Version)
 Developed by Mirza Muhammad Mobeen
-Refined for: DeepL API Integration & Percentage-based Progress Indicators
+Refined for: Official DeepL API Integration & Percentage-based Progress
 """
 #Libraries
 import streamlit as st
@@ -12,7 +12,7 @@ import io
 import tempfile
 import openpyxl
 import time
-from deep_translator import DeeplTranslator
+import deepl
 from docx import Document
 from pdf2docx import Converter
 
@@ -269,7 +269,6 @@ with st.sidebar:
     st.markdown("---")
     view_all = st.toggle("📊 View All Data", value=False)
     st.markdown("---")
-    # Syntax Error Fixed Below with Triple Quotes
     st.markdown("""<p style="text-align:center;font-size:0.75rem;color:#CBD5E1;">Developed by<br><b>Mirza Muhammad Mobeen</b></p>""", unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────
@@ -277,23 +276,17 @@ with st.sidebar:
 # ──────────────────────────────────────────────
 
 def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=True, cache=None):
-    """
-    Core translation logic utilizing the DeepL API, Caching, and Retry support.
-    """
     if not isinstance(text, str) or not text.strip():
         return text
 
-    # CACHE CHECK
     if cache is not None and text in cache:
         return cache[text]
 
-    # Setup Maps and Language Codes for DeepL
+    # Setup Maps
     if direction == "En_to_Jp":
-        src_lang, tgt_lang = 'en', 'ja'
         action_map = dict(zip(glossary_df["Action (English)"].str.lower(), glossary_df["Action (Japanese)"]))
         activity_map = dict(zip(glossary_df["Activity (English)"].str.lower(), glossary_df["Activity (Japanese)"]))
     else:
-        src_lang, tgt_lang = 'ja', 'en'
         action_map = dict(zip(glossary_df["Action (Japanese)"], glossary_df["Action (English)"]))
         activity_map = dict(zip(glossary_df["Activity (Japanese)"], glossary_df["Activity (English)"]))
     
@@ -321,23 +314,29 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
 
     processed_text = pattern.sub(replacer, text)
     
-    # ── DEEPL TRANSLATOR LOGIC ──
+    # ── OFFICIAL DEEPL API LOGIC ──
     max_retries = 3
     translated_text = None
     
     for attempt in range(max_retries):
         try:
-            # Securely pull API Key from Streamlit Secrets
             try:
                 api_key = st.secrets["DEEPL_API_KEY"]
             except KeyError:
                 return "Error: Missing DEEPL_API_KEY in Streamlit secrets."
+                
+            # The official library auto-detects free vs pro keys flawlessly
+            translator = deepl.Translator(api_key)
             
-            # use_free_api=True is required if using a free DeepL API key (ends in :fx)
-            # Change use_free_api=False if you upgrade to a DeepL Pro key
-            translator = DeeplTranslator(api_key=api_key, source=src_lang, target=tgt_lang, use_free_api=True)
-            translated_text = translator.translate(processed_text)
+            # DeepL requires specific target language codes
+            target_lang = "JA" if direction == "En_to_Jp" else "EN-US"
+            
+            result = translator.translate_text(processed_text, target_lang=target_lang)
+            translated_text = result.text
             break
+            
+        except deepl.exceptions.AuthorizationException:
+            return "Error: DeepL API Key is unauthorized. Ensure your key is correct and your DeepL Free account is active."
         except Exception as e:
             if attempt < max_retries - 1:
                 time.sleep(2 ** attempt)  
@@ -363,7 +362,6 @@ def smart_translate_text(text, glossary_df, direction="En_to_Jp", return_html=Tr
         escaped_key_regex = re.escape(key).replace(r"\[", r"\[\s*").replace(r"\]", r"\s*\]")
         final_text = re.sub(escaped_key_regex, formatted_term, final_text)
 
-    # SAVE TO CACHE
     if cache is not None:
         cache[text] = final_text
 
@@ -408,13 +406,11 @@ def translate_docx_file(input_file, glossary_df, direction, progress_bar=None, s
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
-                # We iterate paragraphs inside cells
                 full_text = ""
                 for p in cell.paragraphs:
                     full_text += p.text + "\n"
                 
                 if full_text.strip():
-                     # Simple approach: translate combined text and replace first paragraph
                     translated = smart_translate_text(full_text.strip(), glossary_df, direction, return_html=False, cache=translation_memory)
                     cell.text = translated
                 update_prog()
@@ -445,14 +441,10 @@ def convert_and_translate_pdf(input_file, glossary_df, direction, progress_bar=N
         if os.path.exists(temp_docx_path): os.remove(temp_docx_path)
 
 def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, progress_bar=None, status_text=None):
-    """
-    Translates Excel with caching and percentage progress.
-    """
     output_buffer = io.BytesIO()
     translation_memory = {}
 
     if is_legacy:
-        # Legacy XLS handling
         try:
             xls = pd.read_excel(input_file, sheet_name=None)
             total_cells = sum(df.size for df in xls.values()) 
@@ -461,7 +453,6 @@ def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, pr
             
             with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
                 for sheet_name, df_sheet in xls.items():
-                    # Custom map function to update progress
                     def progress_map(x):
                         nonlocal current_count
                         current_count += 1
@@ -472,9 +463,7 @@ def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, pr
                         
                         return smart_translate_text(x, glossary_df, direction, False, cache=translation_memory) if isinstance(x, str) else x
 
-                    # Translate body
                     df_sheet = df_sheet.map(progress_map)
-                    # Translate headers
                     df_sheet.columns = [smart_translate_text(str(c), glossary_df, direction, False, cache=translation_memory) for c in df_sheet.columns]
                     df_sheet.to_excel(writer, sheet_name=sheet_name, index=False)
             output_buffer.seek(0)
@@ -482,10 +471,8 @@ def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, pr
         except Exception as e:
             return None 
     else:
-        # Modern XLSX (OpenPyXL)
         wb = openpyxl.load_workbook(input_file)
         
-        # 1. Pre-calculate total non-empty string cells
         cells_to_process = []
         if status_text: status_text.text("Analyzing file structure...")
         
@@ -498,12 +485,10 @@ def translate_excel_file(input_file, glossary_df, direction, is_legacy=False, pr
         total_cells = len(cells_to_process)
         if total_cells == 0: total_cells = 1
         
-        # 2. Iterate and Translate
         for i, cell in enumerate(cells_to_process):
             translated = smart_translate_text(cell.value, glossary_df, direction, return_html=False, cache=translation_memory)
             cell.value = translated
             
-            # Update Progress
             if i % 5 == 0 or i == total_cells - 1:
                 pct = int(((i + 1) / total_cells) * 100)
                 if progress_bar: progress_bar.progress((i + 1) / total_cells)
@@ -550,7 +535,6 @@ def translate_csv_file(input_file, glossary_df, direction, progress_bar=None, st
 st.markdown('<p class="hero-title">SCT Automate Keywords Dictionary</p>', unsafe_allow_html=True)
 st.markdown('<p class="hero-subtitle">Bilingual Reference & Smart Translator</p>', unsafe_allow_html=True)
 
-# TABS
 tab_dict, tab_trans, tab_files = st.tabs(["📖 Dictionary Search", "🤖 Smart Translator", "📄 Document Translator"])
 
 # ──────────────────────────────────────────────
